@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Bitkeep Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+        integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBGkKGhxE0Pbt/LLOY+sap9uS1ZwnVQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style type="text/css">
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --border-radius: 0.5rem;
+            --box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease-in-out;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        nav {
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.75rem;
+        }
+
+        .navbar-brand img {
+            width: auto;
+            height: 40px;
+            margin-right: 1rem;
+        }
+
+        .navbar-toggler {
+            border: none;
+            background: transparent;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 123, 255, 0.7)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--dark-text);
+            padding: 0.75rem 1.2rem;
+            transition: color var(--transition);
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 450px;
+            margin-top: 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        .card-title {
+            font-size: 2rem;
+            color: var(--dark-text);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.75rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.6rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color var(--transition);
+            width: 100%;
+            box-shadow: var(--box-shadow);
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            background-color: white;
+            color: var(--secondary-color);
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.04);
+        }
+
+        #loader {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.9) url('img/loading.gif') 50% 50% no-repeat;
+            opacity: 1;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+
+        .input-group .form-control {
+            padding-left: 2.5rem;
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .is-invalid:focus {
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <img src="img/image1.svg" alt="Bitkeep Logo">
+                Bitkeep
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div id="loader" style="display: none;"></div>
+            <div class="card-body">
+                <h5 class="card-title">Admin Login</h5>
+                <form action="admin_login.php" method="POST">
+                    <div class="form-group input-group">
+                        <i class="fa fa-envelope"></i>
+                        <input type="email" id="admin_user" name="admin_user" class="form-control"
+                            placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group input-group">
+                        <i class="fa fa-lock"></i>
+                        <input type="password" id="admin_password" name="admin_password" class="form-control"
+                            placeholder="Enter your password" required>
+                    </div>
+                    <button class="btn btn-primary btn-lg btn-block" name="adminlog" id="login"
+                        type="submit">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-auto">
+        <p class="mb-0">All rights Reserved &copy; <?php echo date('Y');?> BitKeep Management</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginButton = document.getElementById('login');
+            const emailInput = document.getElementById('admin_user');
+            const passwordInput = document.getElementById('admin_password');
+            const loader = document.getElementById('loader');
+            const cardBody = document.querySelector('.card-body');
+
+            function validateEmail() {
+                if (emailInput.value.trim() === '') {
+                    emailInput.classList.add('is-invalid');
+                    return false;
+                } else {
+                    emailInput.classList.remove('is-invalid');
+                    return true;
+                }
+            }
+
+            function validatePassword() {
+                if (passwordInput.value === '') {
+                    passwordInput.classList.add('is-invalid');
+                    return false;
+                } else {
+                    passwordInput.classList.remove('is-invalid');
+                    return true;
+                }
+            }
+
+            loginButton.addEventListener('click', function (event) {
+                const isEmailValid = validateEmail();
+                const isPasswordValid = validatePassword();
+
+                if (!isEmailValid || !isPasswordValid) {
+                    event.preventDefault(); // Prevent form submission if validation fails
+                } else {
+                    // Simulate loading
+                    loader.style.display = 'block';
+                    cardBody.style.opacity = '0.7';
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        cardBody.style.opacity = '1';
+                        // In a real scenario, the form would submit here
+                    }, 1500);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
