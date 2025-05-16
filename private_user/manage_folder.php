@@ -1407,7 +1407,7 @@ $stmt->close();
                   </div>
                   <div>
                     <div class="file-cell-name"><?php echo htmlspecialchars($row['name']); ?></div>
-                    <div class="file-cell-info">Uploaded by you</div>
+                    <div class="file-cell-info"></div>
                   </div>
                 </div>
               </td>
@@ -1425,14 +1425,14 @@ $stmt->close();
                   <a href="preview_files.php?file_id=<?php echo $row['id']; ?>&folder_id=<?php echo $folder_id; ?>" class="file-action-btn preview" title="Preview">
                     <i class="fas fa-eye"></i>
                   </a>
-                  <a href="<?php echo htmlspecialchars($row['file_path']); ?>" class="file-action-btn download" download title="Download">
+                  <!--a href="<?php echo htmlspecialchars($row['file_path']); ?>" class="file-action-btn download" download title="Download">
                     <i class="fas fa-download"></i>
                   </a>
                   <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this file?')">
                     <input type="hidden" name="file_id" value="<?php echo $row['id']; ?>">
                     <button type="submit" name="delete" class="file-action-btn delete" title="Delete">
                       <i class="fas fa-trash-alt"></i>
-                    </button>
+                    </button-->
                   </form>
                 </div>
               </td>

@@ -716,15 +716,6 @@ $user_avatar = strtoupper(substr($id, 0, 1));
       
       <div class="sidebar-divider"></div>
       
-      <a href="view_files.php" class="nav-link">
-        <i class="fas fa-folder-open"></i> View Files
-      </a>
-      <a href="profile.php" class="nav-link">
-        <i class="fas fa-user-circle"></i> My Profile
-      </a>
-      
-      <div class="sidebar-divider"></div>
-      
       <a href="Logout.php" class="nav-link">
         <i class="fas fa-sign-out-alt"></i> Logout
       </a>
@@ -742,12 +733,7 @@ $user_avatar = strtoupper(substr($id, 0, 1));
     <div class="top-navbar">
       <h4 class="page-title">
         <i class="fas fa-file-upload"></i> Upload File
-      </h4>
-      <div class="navbar-actions">
-        <a href="home.php" class="btn btn-primary">
-          <i class="fas fa-folder-open me-2"></i>View Files
-        </a>
-      </div>
+     
     </div>
 
     <!-- Upload Card -->

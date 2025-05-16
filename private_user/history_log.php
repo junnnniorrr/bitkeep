@@ -1,207 +1,673 @@
-<!DOCTYPE html>
-<html lang="en">
 <?php
 session_start();
 if(!isset($_SESSION["email_address"])){
     header("location:../login.html");
 } 
+
+require_once("include/connection.php");
+$id = mysqli_real_escape_string($conn,$_SESSION['email_address']);
+$r = mysqli_query($conn,"SELECT * FROM login_user where id = '$id'") or die (mysqli_error($conn));
+$row = mysqli_fetch_array($r);
+$id=$row['email_address'];
+$user_avatar = strtoupper(substr($id, 0, 1));
 ?>
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>BitKeep Management - User Logs</title>
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css">
-  <!-- Bootstrap core CSS -->
-  <link href="css/bootstrap.min.css" rel="stylesheet">
-  <!-- Material Design Bootstrap -->
-  <link href="css/mdb.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Your custom styles (optional) -->
-  <link href="css/style.css" rel="stylesheet">
-
-  <script src="js/jquery-1.8.3.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="media/css/dataTable.css" />
-  <script src="media/js/jquery.dataTables.js" type="text/javascript"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"/>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
   
-  <script type="text/javascript" charset="utf-8">
-    $(document).ready(function(){
-      $('#dtable').dataTable({
-        "aLengthMenu": [[5, 10, 15, 25, 50, 100 , -1], [5, 10, 15, 25, 50, 100, "All"]],
-        "iDisplayLength": 10
-      });
-    })
-  </script>
-  
-  <style type="text/css">
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f8f9fa;
+  <style>
+    :root {
+        --primary-color: #4361ee;
+        --primary-light: rgba(67, 97, 238, 0.1);
+        --primary-dark: #3a56d4;
+        --secondary-color: #f72585;
+        --secondary-light: rgba(247, 37, 133, 0.1);
+        --dark-color: #1e293b;
+        --light-color: #f8fafc;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-300: #cbd5e1;
+        --gray-400: #94a3b8;
+        --gray-500: #64748b;
+        --gray-600: #475569;
+        --gray-700: #334155;
+        --gray-800: #1e293b;
+        --gray-900: #0f172a;
+        --border-radius-sm: 0.375rem;
+        --border-radius: 0.5rem;
+        --border-radius-lg: 0.75rem;
+        --box-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --box-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --transition: all 0.2s ease-in-out;
+        --sidebar-width: 250px;
+        --navbar-height: 70px;
     }
     
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc;
+        color: var(--gray-800);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding-top: var(--navbar-height);
+        overflow-x: hidden;
+    }
+    
+    /* Sidebar Styles */
+    .sidebar {
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        height: calc(100vh - var(--navbar-height));
+        width: var(--sidebar-width);
+        background-color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        z-index: 999;
+        transition: all 0.3s;
+        overflow-y: auto;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: center;
+    }
+    
+    .sidebar-brand {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: var(--dark-color);
+        text-decoration: none;
+    }
+    
+    .highlight {
+        color: var(--secondary-color);
+    }
+    
+    .sidebar-menu {
+        padding: 15px 0;
+        margin-bottom: 70px;
+    }
+    
+    .sidebar-item {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        color: var(--gray-700);
+        text-decoration: none;
+        transition: all 0.2s;
+        border-left: 4px solid transparent;
+        font-weight: 500;
+    }
+    
+    .sidebar-item:hover, .sidebar-item.active {
+        background-color: var(--gray-100);
+        color: var(--primary-color);
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .sidebar-item i {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .sidebar-divider {
+        height: 1px;
+        background-color: var(--gray-200);
+        margin: 10px 20px;
+    }
+    
+    .sidebar-footer {
+        padding: 15px 20px;
+        border-top: 1px solid var(--gray-200);
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        background-color: white;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 15px 20px;
+        background-color: var(--gray-100);
+        border-radius: var(--border-radius);
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-weight: bold;
+    }
+    
+    .user-details {
+        flex: 1;
+        overflow: hidden;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--gray-800);
+    }
+    
+    .user-role {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+    
+    /* Main Content Styles */
+    .main-content {
+        margin-left: var(--sidebar-width);
+        padding: 30px;
+        transition: all 0.3s;
+        min-height: calc(100vh - var(--navbar-height));
+        width: calc(100% - var(--sidebar-width));
+    }
+    
+    /* Navbar Styles */
     .navbar {
-      box-shadow: 0 4px 12px 0 rgba(0,0,0,.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: white !important;
+        padding: 0 30px;
+        height: var(--navbar-height);
+        margin-left: var(--sidebar-width);
+        transition: all 0.3s;
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1030;
     }
     
     .navbar-brand {
-      font-weight: 600;
-      letter-spacing: 0.5px;
+        font-weight: 700;
+        font-size: 1.5rem;
     }
     
+    /* Toggle Button */
+    .sidebar-toggle {
+        background: none;
+        border: none;
+        color: var(--gray-700);
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--border-radius);
+        transition: all 0.2s;
+    }
+    
+    .sidebar-toggle:hover {
+        background-color: var(--gray-100);
+    }
+    
+    /* Card Styles */
     .card {
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-      border: none;
-      margin-bottom: 30px;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border: none;
+        margin-bottom: 30px;
+        background-color: white;
+        overflow: hidden;
     }
     
     .card-header {
-      border-radius: 10px 10px 0 0 !important;
-      padding: 15px 20px;
-      background: linear-gradient(45deg, #4a6bff, #2196F3);
-      color: white;
+        background-color: white;
+        border-bottom: 1px solid var(--gray-200);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     
-    .btn-info {
-      background: linear-gradient(45deg, #4a6bff, #2196F3) !important;
-      box-shadow: 0 4px 7px rgba(33, 150, 243, 0.28);
-      transition: all 0.3s ease;
+    .card-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: var(--gray-800);
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
     }
     
-    .btn-info:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 7px 14px rgba(33, 150, 243, 0.3);
+    .card-title i {
+        margin-right: 10px;
+        color: var(--primary-color);
     }
     
-    select[multiple], select[size] {
-      height: auto;
-      width: 20px;
+    .card-body {
+        padding: 20px;
     }
     
-    .pull-right {
-      float: right;
-      margin: 2px !important;
+    /* Button Styles */
+    .btn {
+        font-weight: 500;
+        padding: 0.5rem 1.25rem;
+        border-radius: var(--border-radius);
+        transition: all 0.2s;
     }
     
-    #loader {
-      position: fixed;
-      left: 0px;
-      top: 0px;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      background: url('img/lg.flip-book-loader.gif') 50% 50% no-repeat rgb(249,249,249);
-      opacity: 1;
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
     }
     
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow);
+    }
+    
+    /* Table Styles */
     .table {
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-      border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 0;
     }
     
-    .table thead th {
-      background-color: #4a6bff;
-      color: white;
-      font-weight: 500;
-      border: none;
-      padding: 12px 15px;
-      font-size: 14px;
+    .table th {
+        font-weight: 600;
+        color: var(--gray-700);
+        background-color: var(--gray-100);
+        border-bottom: 2px solid var(--gray-200);
+        padding: 12px 15px;
+        font-size: 0.875rem;
     }
     
-    .table tbody tr {
-      border-bottom: 1px solid #f2f2f2;
-      transition: all 0.3s ease;
+    .table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-top: 1px solid var(--gray-200);
+        color: var(--gray-700);
+        font-size: 0.875rem;
     }
     
-    .table tbody tr:hover {
-      background-color: #f8f9ff;
+    .table-hover tbody tr:hover {
+        background-color: var(--gray-50);
     }
     
-    .table tbody td {
-      padding: 12px 15px;
-      font-size: 14px;
-      color: #555;
-    }
-    
-    .table-striped tbody tr:nth-of-type(odd) {
-      background-color: rgba(0, 0, 0, 0.02);
-    }
-    
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current, 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-      background: linear-gradient(45deg, #4a6bff, #2196F3) !important;
-      color: white !important;
-      border: none;
-      border-radius: 4px;
-    }
-    
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-      background: #f0f4ff !important;
-      color: #4a6bff !important;
-      border: 1px solid #4a6bff;
-    }
-    
-    .dataTables_wrapper .dataTables_filter input {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 5px 10px;
-      margin-left: 10px;
+    /* DataTables Custom Styling */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        padding: 15px 0;
     }
     
     .dataTables_wrapper .dataTables_length select {
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 5px;
-      margin: 0 5px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        padding: 0.25rem 0.5rem;
+        margin: 0 0.5rem;
     }
     
-    .page-title {
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        padding: 0.375rem 0.75rem;
+        margin-left: 0.5rem;
     }
     
-    .page-title i {
-      margin-right: 10px;
-      color: #4a6bff;
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.75rem;
+        margin-left: 2px;
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        background-color: white;
     }
     
-    .action-buttons {
-      margin-bottom: 20px;
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: var(--primary-color) !important;
+        color: white !important;
+        border: 1px solid var(--primary-color);
     }
     
-    .footer-copyright {
-      background-color: #f8f9fa;
-      color: #666;
-      text-align: center;
-      padding: 15px 0;
-      margin-top: 30px;
-      border-top: 1px solid #eee;
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: var(--gray-100) !important;
+        color: var(--primary-color) !important;
+        border: 1px solid var(--primary-color);
+    }
+    
+    /* Footer Styles */
+    .footer {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--gray-500);
+        font-size: 0.875rem;
+        background-color: white;
+        border-top: 1px solid var(--gray-200);
+        margin-top: auto;
+        margin-left: var(--sidebar-width);
+        transition: all 0.3s;
+    }
+    
+    /* Loader */
+    #loader {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.97);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .loader-content {
+        text-align: center;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(67, 97, 238, 0.1);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s ease-in-out infinite;
+        margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive Styles */
+    @media (max-width: 992px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        
+        .main-content, .navbar, .footer {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 20px;
+        }
+        
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .card-header .btn {
+            margin-top: 15px;
+            align-self: flex-start;
+        }
+    }
+    
+    /* Security Notification */
+    .security-notification {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        z-index: 9999;
+        text-align: center;
+        max-width: 400px;
+        animation: fadeInUp 0.3s ease;
+    }
+    
+    .security-notification i {
+        font-size: 2.5rem;
+        color: var(--warning-color);
+        margin-bottom: 15px;
+    }
+    
+    .security-notification p {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
     }
   </style>
+</head>
 
-  <script src="jquery.min.js"></script>
-  <script type="text/javascript">
-    $(window).on('load', function(){
-      setTimeout(function(){
-        $('#loader').fadeOut('slow');  
+<body>
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <h5 class="mt-3 text-muted">Loading...</h5>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid">
+      <button class="sidebar-toggle me-3" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+      <span class="navbar-brand">
+        <span class="highlight">Bit</span>Keep <span class="highlight">M</span>anagement <span class="highlight">S</span>ystem
+      </span>
+      <div class="d-flex ms-auto">
+        <span class="navbar-text">
+          <i class="fas fa-calendar-day me-2"></i> <?php echo date('F d, Y'); ?>
+        </span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="user-info">
+      <div class="user-avatar">
+        <?php echo $user_avatar; ?>
+      </div>
+      <div class="user-details">
+        <div class="user-name"><?php echo ucwords(htmlentities($id)); ?></div>
+        <div class="user-role">User</div>
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <a href="home.php" class="sidebar-item">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="add_file.php" class="sidebar-item">
+        <i class="fas fa-file-medical"></i> Add File
+      </a>
+      <a href="history_log.php" class="sidebar-item active">
+        <i class="fas fa-history"></i> User Logs
+      </a>
+      <a href="request_folder.php" class="sidebar-item">
+        <i class="fas fa-folder-plus"></i> Request Folder
+      </a>
+      <a href="user_dashboard.php" class="sidebar-item">
+        <i class="fas fa-folder"></i> My Folders
+      </a>
+      
+      <div class="sidebar-divider"></div>
+      
+      <a href="Logout.php" class="sidebar-item">
+        <i class="fas fa-sign-out-alt"></i> Log Out
+      </a>
+    </div>
+    
+    <div class="sidebar-footer">
+      <small class="text-muted">© <?php echo date('Y'); ?> BitKeep Management System</small>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">
+          <i class="fas fa-history"></i> User Login History
+        </h5>
+        <a href="home.php" class="btn btn-primary">
+          <i class="fas fa-chevron-left me-2"></i> Back to Home
+        </a>
+      </div>
+    </div>
+    
+    <!-- Data Table Card -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table id="dtable" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th><i class="fas fa-user me-2"></i>USER</th>    
+                <th><i class="fas fa-network-wired me-2"></i>IP ADDRESS</th>
+                <th><i class="fas fa-server me-2"></i>HOST</th>
+                <th><i class="fas fa-sign-in-alt me-2"></i>ACTION</th> 
+                <th><i class="fas fa-clock me-2"></i>LOGIN TIME</th>
+                <th><i class="fas fa-sign-out-alt me-2"></i>ACTION</th> 
+                <th><i class="fas fa-clock me-2"></i>LOGOUT TIME</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php 
+                require_once("include/connection.php");
+                $query = mysqli_query($conn,"SELECT * from history_log") or die (mysqli_error($conn));
+                while($file=mysqli_fetch_array($query)){
+                  $name = $file['email_address'];
+                  $ip = $file['ip'];
+                  $host = $file['host'];
+                  $action = $file['action'];
+                  $logintime = $file['login_time'];
+                  $actions = $file['actions'];
+                  $logouttime = $file['logout_time'];
+              ?>
+              <tr>
+                <td><?php echo $name; ?></td>
+                <td><?php echo $ip; ?></td>
+                <td><?php echo $host; ?></td>
+                <td><?php echo $action; ?></td>
+                <td><?php echo $logintime; ?></td>
+                <td><?php echo $actions; ?></td>
+                <td><?php echo $logouttime; ?></td>
+              </tr>
+              <?php } ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="mb-0">All rights Reserved &copy; <?php echo date('Y'); ?> Created By: BitKeep Management</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
+  
+  <script>
+    // Initialize DataTable
+    $(document).ready(function() {
+      $('#dtable').DataTable({
+        responsive: true,
+        "aLengthMenu": [[5, 10, 15, 25, 50, 100, -1], [5, 10, 15, 25, 50, 100, "All"]],
+        "iDisplayLength": 10
       });
     });
     
+    // Loader
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        document.getElementById('loader').style.display = 'none';
+      }, 500);
+    });
+    
+    // Sidebar Toggle
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('active');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+      if (window.innerWidth < 992 && 
+          !document.getElementById('sidebar').contains(e.target) && 
+          e.target !== document.getElementById('sidebarToggle') && 
+          !document.getElementById('sidebarToggle').contains(e.target) && 
+          document.getElementById('sidebar').classList.contains('active')) {
+        document.getElementById('sidebar').classList.remove('active');
+      }
+    });
+    
     // Disable right-click
-    document.addEventListener('contextmenu', function (e) {
+    document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
       showNotification("Right-click is disabled.");
     });
     
     // Disable common keyboard shortcuts
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener('keydown', function(e) {
       if (e.keyCode == 123 || // F12
           (e.ctrlKey && e.shiftKey && e.keyCode == 73) || // Ctrl+Shift+I
           (e.ctrlKey && e.shiftKey && e.keyCode == 74) || // Ctrl+Shift+J
@@ -213,160 +679,17 @@ if(!isset($_SESSION["email_address"])){
       }
     });
     
-    // Disable Print Screen functionality
-    document.addEventListener('keyup', function (e) {
-      if (e.keyCode == 44) { // Print Screen
-        navigator.clipboard.writeText('');
-        showNotification("Print Screen is disabled.");
-      }
-    });
-    
     // Function to show notifications
     function showNotification(message) {
-      // Save the original content
-      var originalContent = document.body.innerHTML;
-    
-      // Replace the content with a notification message
-      document.body.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: white; font-size: 24px;">
-          ${message}
-        </div>
+      const notification = document.createElement('div');
+      notification.className = 'security-notification';
+      notification.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <p>${message}</p>
       `;
-    
-      // Restore the original content after 3 seconds
-      setTimeout(function () {
-        document.body.innerHTML = originalContent;
-      }, 3000);
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
     }
   </script>
-</head>
-
-<body>
-  <?php 
-    require_once("include/connection.php");
-    $id = mysqli_real_escape_string($conn,$_SESSION['email_address']);
-    $r = mysqli_query($conn,"SELECT * FROM login_user where id = '$id'") or die (mysqli_error($con));
-    $row = mysqli_fetch_array($r);
-    $id=$row['email_address'];
-  ?>
-  
-  <div id="loader"></div>
-  
-  <!-- Navbar -->
-  <nav class="mb-1 navbar navbar-expand-lg navbar-dark default-color fixed-top">
-    <div class="container">
-      <a class="navbar-brand" href="#">
-        <img src="js/img/Files_Download.png" width="33px" height="33px" class="mr-2"> 
-        <font color="#F0B56F">Bit</font>Keep <font color="#F0B56F">M</font>anagement <font color="#F0B56F">S</font>ystem
-      </a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent-4"
-        aria-controls="navbarSupportedContent-4" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink-4" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-              <font color="black">Welcome!,</font> <?php echo ucwords(htmlentities($id)); ?> 
-              <i class="fas fa-user-circle ml-1"></i>
-            </a>
-            <div class="dropdown-menu dropdown-menu-right dropdown-info" aria-labelledby="navbarDropdownMenuLink-4">
-              <a class="dropdown-item" href="home.php"><i class="fas fa-chevron-circle-left mr-2"></i>Home</a>
-              <a class="dropdown-item" href="add_file.php"><i class="fas fa-file-medical mr-2"></i>Add file</a>
-              <a class="dropdown-item" href="Logout.php"><i class="fas fa-sign-in-alt mr-2"></i>LogOut</a>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-  <!-- /.Navbar -->
-  
-  <!-- Main content -->
-  <main class="pt-5 mt-5">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <!-- Page header -->
-          <div class="card mb-4">
-            <div class="card-body d-flex justify-content-between align-items-center">
-              <h4 class="page-title mb-0">
-                <i class="fas fa-history"></i> User Login History
-              </h4>
-              <div class="action-buttons">
-                <a href="home.php" class="btn btn-info">
-                  <i class="fas fa-chevron-circle-left mr-1"></i> Back to Home
-                </a>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Data table card -->
-          <div class="card">
-            <div class="card-body">
-              <div class="table-responsive">
-                <table id="dtable" class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th><i class="fas fa-user mr-1"></i> USER</th>    
-                      <th><i class="fas fa-network-wired mr-1"></i> IP ADDRESS</th>
-                      <th><i class="fas fa-server mr-1"></i> HOST</th>
-                      <th><i class="fas fa-sign-in-alt mr-1"></i> ACTION</th> 
-                      <th><i class="fas fa-clock mr-1"></i> LOGIN TIME</th>
-                      <th><i class="fas fa-sign-out-alt mr-1"></i> ACTION</th> 
-                      <th><i class="fas fa-clock mr-1"></i> LOGOUT TIME</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php 
-                      require_once("include/connection.php");
-                      $query = mysqli_query($conn,"SELECT * from history_log") or die (mysqli_error($conn));
-                      while($file=mysqli_fetch_array($query)){
-                        $name = $file['email_address'];
-                        $ip = $file['ip'];
-                        $host = $file['host'];
-                        $action = $file['action'];
-                        $logintime = $file['login_time'];
-                        $actions = $file['actions'];
-                        $logouttime = $file['logout_time'];
-                    ?>
-                    <tr>
-                      <td><?php echo $name; ?></td>
-                      <td><?php echo $ip; ?></td>
-                      <td><?php echo $host; ?></td>
-                      <td><?php echo $action; ?></td>
-                      <td><?php echo $logintime; ?></td>
-                      <td><?php echo $actions; ?></td>
-                      <td><?php echo $logouttime; ?></td>
-                    </tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-  
-  <!-- Footer -->
-  <footer class="page-footer font-small blue mt-5">
-    <div class="footer-copyright py-3">
-      <p class="text-center mb-0">All rights Reserved &copy; <?php echo date('Y');?> Created By: BitKeep Management</p>
-    </div>
-  </footer>
-  
-  <!-- SCRIPTS -->
-  <script type="text/javascript" src="js/jquery-3.4.0.min.js"></script>
-  <script type="text/javascript" src="js/popper.min.js"></script>
-  <script type="text/javascript" src="js/bootstrap.min.js"></script>
-  <script type="text/javascript" src="js/mdb.min.js"></script>
-  
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css"/>   
-  <script type="text/javascript" src="https://cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/1.0.3/css/dataTables.responsive.css">
-  <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/responsive/1.0.3/js/dataTables.responsive.js"></script>
 </body>
 </html>
