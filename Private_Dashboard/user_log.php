@@ -615,7 +615,7 @@ if (!isset($_SESSION['admin_user'])) {
           <span>User Logs</span>
          </a>
           <li class="nav-item">
-        <a class="nav-link" href="user_log.php">
+        <a class="nav-link" href="file_log.php">
           <i class="fas fa-file-alt"></i>
           <span>File Logs</span>
         </a>

@@ -684,12 +684,6 @@ $folder_id = $file_info['folder_id'];
             text-align: center;
         }
         
-        #pdf-viewer {
-            width: 100%;
-            height: 80vh;
-            border: none;
-        }
-        
         .preview-text {
             width: 100%;
             height: 80vh;
@@ -949,6 +943,51 @@ $folder_id = $file_info['folder_id'];
                 height: 2rem;
             }
         }
+        
+        /* Custom PDF viewer styles to hide print and download buttons */
+        /* This creates a wrapper for our custom PDF viewer */
+        .custom-pdf-wrapper {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+        }
+        
+        /* The actual PDF viewer iframe */
+        #pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Overlay to intercept clicks on print/download buttons */
+        .pdf-toolbar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px; /* Adjust based on the toolbar height */
+            z-index: 1000;
+            pointer-events: none; /* Allow clicks to pass through by default */
+        }
+        
+        /* These are positioned blocks that will intercept clicks only on the print/download buttons */
+        .block-print-button, .block-download-button {
+            position: absolute;
+            top: 0;
+            height: 40px;
+            width: 40px;
+            pointer-events: auto; /* Block clicks on these specific areas */
+            background: transparent;
+        }
+        
+        /* Position these based on common PDF.js toolbar layouts */
+        .block-print-button {
+            right: 80px; /* Adjust based on your PDF.js viewer */
+        }
+        
+        .block-download-button {
+            right: 40px; /* Adjust based on your PDF.js viewer */
+        }
     </style>
 </head>
 <body>
@@ -1148,7 +1187,16 @@ $folder_id = $file_info['folder_id'];
                     </div>
                 </div>
                 <div class="preview-content" id="pdfViewerContainer">
-                    <iframe id="pdf-viewer" src="<?php echo htmlspecialchars($file_path); ?>" type="application/pdf"></iframe>
+                    <!-- Modified PDF viewer with wrapper and overlay -->
+                    <div class="custom-pdf-wrapper">
+                        <!-- Overlay to block specific buttons -->
+                        <div class="pdf-toolbar-overlay">
+                            <div class="block-print-button"></div>
+                            <div class="block-download-button"></div>
+                        </div>
+                        <!-- Use a custom URL parameter to signal we want to hide buttons -->
+                        <iframe id="pdf-viewer" src="<?php echo htmlspecialchars($file_path); ?>#toolbar=1&navpanes=1&scrollbar=1&view=FitH&hideprint=true&hidedownload=true" type="application/pdf"></iframe>
+                    </div>
                 </div>
                 
                 <?php elseif ($viewer_type === 'text'): ?>
@@ -1345,10 +1393,245 @@ $folder_id = $file_info['folder_id'];
         const pdfViewer = document.getElementById('pdf-viewer');
         const pdfViewerContainer = document.getElementById('pdfViewerContainer');
         
-        // Check if the iframe content loaded correctly
+        // Enhanced PDF.js button hiding
         if (pdfViewer) {
-            pdfViewer.onload = function() {
-                // If the iframe content couldn't be loaded properly, switch to PDF.js rendering
+            // Function to hide print and download buttons in PDF.js viewer
+            function hidePdfButtons() {
+                try {
+                    // Try to access the iframe content
+                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
+                    
+                    if (iframeDoc) {
+                        // Method 1: Inject CSS to hide buttons
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            /* Target buttons by various selectors */
+                            button[data-l10n-id="print"],
+                            button[data-l10n-id="download"],
+                            button[aria-label="Print"],
+                            button[aria-label="Download"],
+                            #print,
+                            #download,
+                            .print,
+                            .download,
+                            .toolbarButton.print,
+                            .toolbarButton.download,
+                            #secondaryPrint,
+                            #secondaryDownload,
+                            .secondaryToolbarButton.print,
+                            .secondaryToolbarButton.download,
+                            [title="Print"],
+                            [title="Download"] {
+                                display: none !important;
+                                visibility: hidden !important;
+                                opacity: 0 !important;
+                                pointer-events: none !important;
+                            }
+                            
+                            /* Target by position if specific selectors fail */
+                            .toolbarButton:nth-last-child(1),
+                            .toolbarButton:nth-last-child(2) {
+                                display: none !important;
+                            }
+                        `;
+                        
+                        iframeDoc.head.appendChild(style);
+                        
+                        // Method 2: Direct DOM manipulation
+                        const selectors = [
+                            'button[data-l10n-id="print"]',
+                            'button[data-l10n-id="download"]',
+                            'button[aria-label="Print"]',
+                            'button[aria-label="Download"]',
+                            '#print',
+                            '#download',
+                            '.print',
+                            '.download',
+                            '.toolbarButton.print',
+                            '.toolbarButton.download',
+                            '#secondaryPrint',
+                            '#secondaryDownload',
+                            '.secondaryToolbarButton.print',
+                            '.secondaryToolbarButton.download',
+                            '[title="Print"]',
+                            '[title="Download"]'
+                        ];
+                        
+                        selectors.forEach(selector => {
+                            const elements = iframeDoc.querySelectorAll(selector);
+                            elements.forEach(el => {
+                                el.style.display = 'none';
+                                el.style.visibility = 'hidden';
+                                el.disabled = true;
+                                el.setAttribute('aria-hidden', 'true');
+                                // Remove event listeners by cloning and replacing
+                                const clone = el.cloneNode(true);
+                                if (el.parentNode) {
+                                    el.parentNode.replaceChild(clone, el);
+                                }
+                            });
+                        });
+                        
+                        // Method 3: Find buttons by their icon content
+                        const allButtons = iframeDoc.querySelectorAll('button');
+                        allButtons.forEach(button => {
+                            // Check if button contains print or download icons
+                            const buttonText = button.textContent.toLowerCase();
+                            const buttonHTML = button.innerHTML.toLowerCase();
+                            if (
+                                buttonText.includes('print') || 
+                                buttonText.includes('download') ||
+                                buttonHTML.includes('print') || 
+                                buttonHTML.includes('download')
+                            ) {
+                                button.style.display = 'none';
+                                button.style.visibility = 'hidden';
+                                button.disabled = true;
+                                button.setAttribute('aria-hidden', 'true');
+                            }
+                        });
+                        
+                        // Method 4: Set up a mutation observer to catch dynamically added buttons
+                        const observer = new MutationObserver(function() {
+                            // Re-run our button hiding logic
+                            selectors.forEach(selector => {
+                                const elements = iframeDoc.querySelectorAll(selector);
+                                elements.forEach(el => {
+                                    el.style.display = 'none';
+                                    el.style.visibility = 'hidden';
+                                    el.disabled = true;
+                                });
+                            });
+                        });
+                        
+                        // Start observing the document with the configured parameters
+                        observer.observe(iframeDoc.body, { 
+                            childList: true, 
+                            subtree: true,
+                            attributes: true,
+                            attributeFilter: ['style', 'class']
+                        });
+                        
+                        // Method 5: Override print and save functions
+                        try {
+                            if (pdfViewer.contentWindow) {
+                                // Override print function
+                                pdfViewer.contentWindow.print = function() {
+                                    console.log('Print function blocked');
+                                    return false;
+                                };
+                                
+                                // Try to access the PDFViewerApplication object
+                                if (pdfViewer.contentWindow.PDFViewerApplication) {
+                                    const app = pdfViewer.contentWindow.PDFViewerApplication;
+                                    
+                                    // Override download methods if they exist
+                                    if (app.download) {
+                                        app.download = function() {
+                                            console.log('Download function blocked');
+                                            return false;
+                                        };
+                                    }
+                                    
+                                    if (app.downloadOrSave) {
+                                        app.downloadOrSave = function() {
+                                            console.log('Download function blocked');
+                                            return false;
+                                        };
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Could not override print/save functions', e);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error hiding PDF buttons:', e);
+                }
+            }
+            
+            // Position the blocking overlays more precisely
+            function positionBlockers() {
+                try {
+                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
+                    
+                    if (iframeDoc) {
+                        // Find the print and download buttons
+                        const printButton = iframeDoc.querySelector('button[data-l10n-id="print"], .print, .toolbarButton.print, button[aria-label="Print"]');
+                        const downloadButton = iframeDoc.querySelector('button[data-l10n-id="download"], .download, .toolbarButton.download, button[aria-label="Download"]');
+                        
+                        if (printButton) {
+                            const rect = printButton.getBoundingClientRect();
+                            const blockPrint = document.querySelector('.block-print-button');
+                            if (blockPrint) {
+                                blockPrint.style.right = 'auto';
+                                blockPrint.style.left = `${rect.left}px`;
+                                blockPrint.style.width = `${rect.width}px`;
+                                blockPrint.style.height = `${rect.height}px`;
+                            }
+                        }
+                        
+                        if (downloadButton) {
+                            const rect = downloadButton.getBoundingClientRect();
+                            const blockDownload = document.querySelector('.block-download-button');
+                            if (blockDownload) {
+                                blockDownload.style.right = 'auto';
+                                blockDownload.style.left = `${rect.left}px`;
+                                blockDownload.style.width = `${rect.width}px`;
+                                blockDownload.style.height = `${rect.height}px`;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error positioning blockers:', e);
+                }
+            }
+            
+            // Try multiple times to hide buttons and position blockers
+            function attemptToHideButtons() {
+                hidePdfButtons();
+                positionBlockers();
+                
+                // Try again after short delays to catch late-loaded elements
+                setTimeout(hidePdfButtons, 500);
+                setTimeout(hidePdfButtons, 1000);
+                setTimeout(hidePdfButtons, 2000);
+                
+                setTimeout(positionBlockers, 500);
+                setTimeout(positionBlockers, 1000);
+                setTimeout(positionBlockers, 2000);
+            }
+            
+            // Call when iframe loads
+            pdfViewer.onload = attemptToHideButtons;
+            
+            // Also try immediately
+            attemptToHideButtons();
+            
+            // Add event listeners to the blocking overlays
+            const blockPrint = document.querySelector('.block-print-button');
+            const blockDownload = document.querySelector('.block-download-button');
+            
+            if (blockPrint) {
+                blockPrint.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Print button click blocked');
+                    return false;
+                });
+            }
+            
+            if (blockDownload) {
+                blockDownload.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Download button click blocked');
+                    return false;
+                });
+            }
+            
+            // Check if the iframe content loaded correctly
+            setTimeout(function() {
                 try {
                     if (pdfViewer.contentDocument && 
                         pdfViewer.contentDocument.body && 
@@ -1359,27 +1642,14 @@ $folder_id = $file_info['folder_id'];
                     // CORS error or other issue, switch to PDF.js
                     renderPDFWithPDFJS('<?php echo htmlspecialchars($file_path); ?>');
                 }
-            };
-            
-            // Fallback if iframe doesn't trigger onload or has issues
-            setTimeout(function() {
-                try {
-                    if (pdfViewer.contentDocument && 
-                        pdfViewer.contentDocument.body && 
-                        pdfViewer.contentDocument.body.innerHTML.trim() === '') {
-                        renderPDFWithPDFJS('<?php echo htmlspecialchars($file_path); ?>');
-                    }
-                } catch (e) {
-                    renderPDFWithPDFJS('<?php echo htmlspecialchars($file_path); ?>');
-                }
             }, 3000);
         }
         
-        // Function to render PDF with PDF.js as a fallback
+        // Function to render PDF with PDF.js as a fallback (without print/download buttons)
         function renderPDFWithPDFJS(url) {
             if (!pdfViewerContainer) return;
             
-            // Create custom PDF viewer
+            // Create custom PDF viewer (without print/download buttons)
             pdfViewerContainer.innerHTML = `
                 <div class="pdf-controls">
                     <div class="pdf-page-controls">
@@ -1416,7 +1686,7 @@ $folder_id = $file_info['folder_id'];
             const pageInfo = document.getElementById('pageInfo');
             const prevPage = document.getElementById('prevPage');
             const nextPage = document.getElementById('nextPage');
-            const zoomOutPdf = document.getElementById('zoomOutPdf');
+            const zoomOutPdf =  document.getElementById('zoomOutPdf');
             const zoomInPdf = document.getElementById('zoomInPdf');
             const resetZoomPdf = document.getElementById('resetZoomPdf');
             const zoomInfo = document.getElementById('zoomInfo');
