@@ -654,6 +654,9 @@ $name = $row['name'];
        <a href="file_log.php" class="nav-link">
         <i class="fas fa-file-alt"></i> File Log
       </a>
+       <a href="security_logs.php" class="nav-link">
+        <i class="fas fa-lock"></i> Security Log
+      </a>
     </div>
   </div>
 

@@ -583,6 +583,12 @@ if(!isset($_SESSION["admin_user"])){
       <a href="file_log.php" class="nav-link">
         <i class="fas fa-file-alt"></i> File Log
       </a>
+            <a href="security_logs.php" class="nav-link">
+        <i class="fas fa-lock"></i> Security Log
+      </a>
+      <a href="admin_files_log.php" class="nav-link">
+        <i class="fas fa-file-alt"></i> Admin file Access Log
+      </a>
     </div>
   </div>
 
@@ -600,137 +606,169 @@ if(!isset($_SESSION["admin_user"])){
         <i class="fas fa-sign-out-alt"></i>Sign Out
       </a>
     </nav>
+<!-- Dashboard Content -->
+<div class="container-fluid px-0">
+  <!-- Stats Cards -->
+  <div class="row g-4">
+    <?php
+    require_once("include/connection.php");
+    
+    // Fetch counts for files, users (employees), admins, folders, admin logged activities, and user logged activities
+    $file_count_query = "SELECT COUNT(*) AS total_files FROM upload_files";
+    $user_count_query = "SELECT COUNT(*) AS total_users FROM login_user";
+    $admin_count_query = "SELECT COUNT(*) AS total_admins FROM admin_login";
+    $folder_count_query = "SELECT COUNT(*) AS total_folders FROM folders";
+    
+    // Add queries for security logs and file access logs
+    $security_logs_query = "SELECT COUNT(*) AS total_security_logs FROM security_logs";
+    $file_access_logs_query = "SELECT COUNT(*) AS total_file_access FROM file_access_logs";
 
-    <!-- Dashboard Content -->
-    <div class="container-fluid px-0">
-      <!-- Stats Cards -->
-      <div class="row g-4">
-        <?php
-        require_once("include/connection.php");
-        
-        // Fetch counts for files, users (employees), admins, folders, admin logged activities, and user logged activities
-        $file_count_query = "SELECT COUNT(*) AS total_files FROM upload_files";
-        $user_count_query = "SELECT COUNT(*) AS total_users FROM login_user";
-        $admin_count_query = "SELECT COUNT(*) AS total_admins FROM admin_login";
-        $folder_count_query = "SELECT COUNT(*) AS total_folders FROM folders";
-        
-        // Admin logged activities and user logged activities from history logs
-        $admin_logged_query = "SELECT COUNT(*) AS admin_logged FROM history_log1 WHERE action LIKE '%LoggedIn%'";
-        $user_logged_query = "SELECT COUNT(*) AS user_logged FROM history_log WHERE action LIKE '%LoggedIn%'";
-        
-        // Execute queries
-        $file_count_result = mysqli_query($conn, $file_count_query);
-        $user_count_result = mysqli_query($conn, $user_count_query);
-        $admin_count_result = mysqli_query($conn, $admin_count_query);
-        $folder_count_result = mysqli_query($conn, $folder_count_query);
-        $admin_logged_result = mysqli_query($conn, $admin_logged_query);
-        $user_logged_result = mysqli_query($conn, $user_logged_query);
-        
-        // Fetch results
-        $file_count = mysqli_fetch_assoc($file_count_result)['total_files'];
-        $user_count = mysqli_fetch_assoc($user_count_result)['total_users'];
-        $admin_count = mysqli_fetch_assoc($admin_count_result)['total_admins'];
-        $folder_count = mysqli_fetch_assoc($folder_count_result)['total_folders'];
-        $admin_logged = mysqli_fetch_assoc($admin_logged_result)['admin_logged'];
-        $user_logged = mysqli_fetch_assoc($user_logged_result)['user_logged'];
-        ?>
-        
-        <!-- Total Files -->
-        <div class="col-md-3">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary-color);">
-              <i class="fas fa-file-alt"></i>
-            </div>
-            <h3 class="mb-2">Total Documents</h3>
-            <p class="display-4 mb-0"><?php echo $file_count; ?></p>
-            <a href="add_document.php" class="text-decoration-none">Manage Documents <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
+    // Admin logged activities and user logged activities from history logs
+    $admin_logged_query = "SELECT COUNT(*) AS admin_logged FROM history_log1 WHERE action LIKE '%LoggedIn%'";
+    $user_logged_query = "SELECT COUNT(*) AS user_logged FROM history_log WHERE action LIKE '%LoggedIn%'";
+    
+    // Execute queries
+    $file_count_result = mysqli_query($conn, $file_count_query);
+    $user_count_result = mysqli_query($conn, $user_count_query);
+    $admin_count_result = mysqli_query($conn, $admin_count_query);
+    $folder_count_result = mysqli_query($conn, $folder_count_query);
+    $admin_logged_result = mysqli_query($conn, $admin_logged_query);
+    $user_logged_result = mysqli_query($conn, $user_logged_query);
+    $security_logs_result = mysqli_query($conn, $security_logs_query);
+    $file_access_logs_result = mysqli_query($conn, $file_access_logs_query);
+    
+    // Fetch results
+    $file_count = mysqli_fetch_assoc($file_count_result)['total_files'];
+    $user_count = mysqli_fetch_assoc($user_count_result)['total_users'];
+    $admin_count = mysqli_fetch_assoc($admin_count_result)['total_admins'];
+    $folder_count = mysqli_fetch_assoc($folder_count_result)['total_folders'];
+    $admin_logged = mysqli_fetch_assoc($admin_logged_result)['admin_logged'];
+    $user_logged = mysqli_fetch_assoc($user_logged_result)['user_logged'];
+    $security_logs_count = mysqli_fetch_assoc($security_logs_result)['total_security_logs'];
+    $file_access_logs_count = mysqli_fetch_assoc($file_access_logs_result)['total_file_access'];
+    ?>
+    
+    <!-- Total Files -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary-color);">
+          <i class="fas fa-file-alt"></i>
         </div>
-        
-        <!-- Total Users -->
-        <div class="col-md-3">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color);">
-              <i class="fas fa-users"></i>
-            </div>
-            <h3 class="mb-2">Total Users</h3>
-            <p class="display-4 mb-0"><?php echo $user_count; ?></p>
-            <a href="view_user.php" class="text-decoration-none">Manage users <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
+        <h3 class="mb-2">Total Documents</h3>
+        <p class="display-4 mb-0"><?php echo $file_count; ?></p>
+        <a href="add_document.php" class="text-decoration-none">Manage Documents <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- Total Users -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color);">
+          <i class="fas fa-users"></i>
         </div>
-        
-        <!-- Total Admins -->
-        <div class="col-md-3">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(245, 158, 11, 0.1); color: var(--accent-color);">
-              <i class="fas fa-user-shield"></i>
-            </div>
-            <h3 class="mb-2">Total Admins</h3>
-            <p class="display-4 mb-0"><?php echo $admin_count; ?></p>
-            <a href="view_admin.php" class="text-decoration-none">Manage admins <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
+        <h3 class="mb-2">Total Users</h3>
+        <p class="display-4 mb-0"><?php echo $user_count; ?></p>
+        <a href="view_user.php" class="text-decoration-none">Manage users <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- Total Admins -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(245, 158, 11, 0.1); color: var(--accent-color);">
+          <i class="fas fa-user-shield"></i>
         </div>
-        
-        <!-- Total Folders -->
-        <div class="col-md-3">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
-              <i class="fas fa-folder"></i>
-            </div>
-            <h3 class="mb-2">Total Folders</h3>
-            <p class="display-4 mb-0"><?php echo $folder_count; ?></p>
-            <a href="folder_management.php" class="text-decoration-none">Manage folders <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
+        <h3 class="mb-2">Total Admins</h3>
+        <p class="display-4 mb-0"><?php echo $admin_count; ?></p>
+        <a href="view_admin.php" class="text-decoration-none">Manage admins <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- Total Folders -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger-color);">
+          <i class="fas fa-folder"></i>
+        </div>
+        <h3 class="mb-2">Total Folders</h3>
+        <p class="display-4 mb-0"><?php echo $folder_count; ?></p>
+        <a href="folder_management.php" class="text-decoration-none">Manage folders <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Activity Cards -->
+  <div class="row g-4 mt-2">
+    <!-- Admin Logged Activities -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary-color);">
+          <i class="fas fa-user-check"></i>
+        </div>
+        <h3 class="mb-2">Admin Logged Activities</h3>
+        <p class="display-4 mb-0"><?php echo $admin_logged; ?></p>
+        <a href="admin_log.php" class="text-decoration-none">View admin logs <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- Users Logged Activities -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color);">
+          <i class="fas fa-user-clock"></i>
+        </div>
+        <h3 class="mb-2">Users Logged Activities</h3>
+        <p class="display-4 mb-0"><?php echo $user_logged; ?></p>
+        <a href="user_log.php" class="text-decoration-none">View user logs <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- Security Logs -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(220, 38, 38, 0.1); color: #dc2626;">
+          <i class="fas fa-shield-virus"></i>
+        </div>
+        <h3 class="mb-2">Security Events</h3>
+        <p class="display-4 mb-0"><?php echo $security_logs_count; ?></p>
+        <a href="security_logs.php" class="text-decoration-none">View security logs <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+    
+    <!-- File Access Logs -->
+    <div class="col-md-3">
+      <div class="dashboard-card p-4">
+        <div class="card-icon" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5;">
+          <i class="fas fa-file-medical"></i>
+        </div>
+        <h3 class="mb-2">File Access Events</h3>
+        <p class="display-4 mb-0"><?php echo $file_access_logs_count; ?></p>
+        <a href="file_log.php" class="text-decoration-none">View file access logs <i class="fas fa-arrow-right ms-1"></i></a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts -->
+  <div class="row g-4 mt-2">
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4>System Overview</h4>
+        <div class="chart-wrapper">
+          <canvas id="fileChart"></canvas>
         </div>
       </div>
-      
-      <!-- Activity Cards -->
-      <div class="row g-4 mt-2">
-        <!-- Admin Logged Activities -->
-        <div class="col-md-6">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(99, 102, 241, 0.1); color: var(--primary-color);">
-              <i class="fas fa-user-check"></i>
-            </div>
-            <h3 class="mb-2">Admin Logged Activities</h3>
-            <p class="display-4 mb-0"><?php echo $admin_logged; ?></p>
-            <a href="admin_log.php" class="text-decoration-none">View admin logs <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-container">
+        <h4>User Distribution</h4>
+        <div class="chart-wrapper">
+          <canvas id="userChart"></canvas>
         </div>
-        
-        <!-- Users Logged Activities -->
-        <div class="col-md-6">
-          <div class="dashboard-card p-4">
-            <div class="card-icon" style="background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color);">
-              <i class="fas fa-user-clock"></i>
-            </div>
-            <h3 class="mb-2">Users Logged Activities</h3>
-            <p class="display-4 mb-0"><?php echo $user_logged; ?></p>
-            <a href="user_log.php" class="text-decoration-none">View user logs <i class="fas fa-arrow-right ms-1"></i></a>
-          </div>
-        </div>
+        <div id="userChartLegend" class="custom-legend mt-2"></div>
       </div>
-      
-      <!-- Charts -->
-      <div class="row g-4 mt-2">
-        <div class="col-md-6">
-          <div class="chart-container">
-            <h4>System Overview</h4>
-            <div class="chart-wrapper">
-              <canvas id="fileChart"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="chart-container">
-            <h4>User Distribution</h4>
-            <div class="chart-wrapper">
-              <canvas id="userChart"></canvas>
-            </div>
-            <div id="userChartLegend" class="custom-legend mt-2"></div>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Activity Timeline Chart -->
       <div class="row g-4 mt-2">

@@ -412,6 +412,11 @@ else{
           <i class="fas fa-file-alt"></i>
           <span>File Logs</span>
         </a>
+         <li class="nav-item">
+        <a class="nav-link" href="security_logs.php">
+          <i class="fas fa-lock"></i>
+          <span>Security Logs</span>
+        </a>
       </li>
     </ul>
   </div>

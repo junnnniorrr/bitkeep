@@ -707,6 +707,8 @@ $breadcrumbs = getBreadcrumbTrail($conn, $folder_id);
       </a>
       <a href="file_log.php" class="nav-link">
         <i class="fas fa-file-alt"></i> File Log
+        <a href="security_logs.php" class="nav-link">
+        <i class="fas fa-lock"></i> Security Log
       </a>
     </div>
   </div>

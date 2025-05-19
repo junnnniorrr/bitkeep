@@ -474,6 +474,14 @@ if (!isset($_SESSION['admin_user'])) {
         <i class="fas fa-history"></i>
         <span>User Logs</span>
       </a>
+      <a href="file_log.php" class="menu-item">
+        <i class="fas fa-file-alt"></i>
+        <span>file Logs</span>
+      </a>
+      <a href="security_logs.php" class="menu-item">
+        <i class="fas fa-lock"></i>
+        <span>security Logs</span>
+      </a>
     </div>
   </div>
   

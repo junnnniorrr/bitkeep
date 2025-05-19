@@ -519,7 +519,7 @@ if(!isset($_SESSION["email_address"])){
      $id = mysqli_real_escape_string($conn,$_SESSION['email_address']);
      $r = mysqli_query($conn,"SELECT * FROM login_user where id = '$id'") or die (mysqli_error($con));
      $row = mysqli_fetch_array($r);
-     $id=$row['email_address'];
+     $id = $row['email_address'] ?? null;
   ?>
   
   <!-- Loading screen -->

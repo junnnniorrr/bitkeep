@@ -562,6 +562,9 @@ header('Location: index.html');
            <a href="file_log.php" class="list-group-item list-group-item-action waves-effect">
         <i class="fas fa-file-alt mr-3"></i>File Log
         </a>
+          <a href="security_logs.php" class="list-group-item list-group-item-action waves-effect">
+        <i class="fas fa-lock mr-3"></i>Security Log
+        </a>
       </div>
     </div>
     <!-- Sidebar -->

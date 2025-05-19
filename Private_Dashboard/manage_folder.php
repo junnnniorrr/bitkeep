@@ -821,6 +821,9 @@ $admin_email = $row_admin['admin_user'];
       <a href="file_log.php" class="nav-link">
         <i class="fas fa-file-alt"></i> File Log
       </a>
+      <a href="security_logs.php" class="nav-link">
+        <i class="fas fa-lock"></i> Security Log
+      </a>
     </div>
   </div>
 
@@ -1084,10 +1087,10 @@ $admin_email = $row_admin['admin_user'];
                       <a href="view_files.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-success">
                         <i class="fas fa-eye"></i>
                       </a>
-                      <a href="downloadfolderfile.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-info">
+                      <a href="download_file.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-info">
                         <i class="fas fa-download"></i>
                       </a>
-                      <a href="deletefolderfile.php?file_id=<?php echo $file['id']; ?>&folder_id=<?php echo $folder_id; ?>" 
+                      <a href="delete_file.php?file_id=<?php echo $file['id']; ?>&folder_id=<?php echo $folder_id; ?>" 
                          class="btn btn-sm btn-danger" 
                          onclick="return confirm('Are you sure you want to delete this file?');">
                         <i class="fas fa-trash"></i>

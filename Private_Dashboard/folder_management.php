@@ -535,6 +535,8 @@ if (!isset($_SESSION['admin_user'])) {
         <i class="fas fa-history"></i> User Log
         <a href="file_log.php" class="nav-link">
         <i class="fas fa-file-alt"></i> File Log
+        <a href="security_logs.php" class="nav-link">
+        <i class="fas fa-lock"></i> Security Log
       </a>
     </div>
   </div>

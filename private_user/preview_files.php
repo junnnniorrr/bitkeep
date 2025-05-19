@@ -116,11 +116,25 @@ function getViewerType($extension) {
     return isset($viewers[$extension]) ? $viewers[$extension] : 'unknown';
 }
 
+// Generate a secure token for this viewing session
+function generateSecureToken() {
+    return bin2hex(random_bytes(16));
+}
+
+// Create a secure token for this viewing session
+$secure_token = generateSecureToken();
+
+// Store the token in the session for verification
+$_SESSION['file_view_token'] = $secure_token;
+
 // Get viewer type for this file
 $viewer_type = getViewerType($file_extension);
 $file_path = $file_info['file_path'];
 $file_name = $file_info['name'];
 $folder_id = $file_info['folder_id'];
+
+// For secure file access, we'll create a proxy endpoint
+$secure_viewer_url = "secure_viewer.php?file_id={$file_id}&token={$secure_token}";
 ?>
 
 <!DOCTYPE html>
@@ -627,6 +641,48 @@ $folder_id = $file_info['folder_id'];
             overflow: hidden;
         }
         
+        /* Secure Canvas Container Styles */
+        .secure-canvas-container {
+            width: 100%;
+            height: 80vh;
+            overflow: auto;
+            background-color: var(--gray-100);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .secure-canvas {
+            display: block;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .watermark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-45deg);
+            font-size: 3rem;
+            color: rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .watermark-text {
+            white-space: nowrap;
+            user-select: none;
+        }
+        
         .preview-image {
             max-width: 100%;
             max-height: 80vh;
@@ -655,6 +711,7 @@ $folder_id = $file_info['folder_id'];
             padding: 0.5rem 1rem;
             border-radius: 9999px;
             box-shadow: var(--box-shadow);
+            z-index: 20;
         }
         
         .image-control-btn {
@@ -697,12 +754,8 @@ $folder_id = $file_info['folder_id'];
             color: var(--gray-800);
             border: none;
             resize: none;
-        }
-        
-        .office-viewer {
-            width: 100%;
-            height: 80vh;
-            border: none;
+            position: relative;
+            z-index: 5;
         }
         
         .unsupported-file {
@@ -740,7 +793,7 @@ $folder_id = $file_info['folder_id'];
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            z-index: 30;
         }
         
         .loading-spinner {
@@ -818,44 +871,19 @@ $folder_id = $file_info['folder_id'];
             transition: all 0.3s;
         }
         
-        /* PDF.js custom viewer */
-        .pdf-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 1.5rem;
-            background-color: var(--gray-100);
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .pdf-page-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .pdf-page-info {
-            font-size: 0.875rem;
+        /* Security notification */
+        .security-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 9999;
+            text-align: center;
             font-weight: 500;
-            color: var(--gray-700);
-        }
-        
-        .pdf-container {
-            width: 100%;
-            height: calc(80vh - 3.5rem);
-            overflow-y: auto;
-            background-color: var(--gray-200);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            gap: 2rem;
-        }
-        
-        .pdf-page {
-            background-color: white;
-            box-shadow: var(--box-shadow);
-            border-radius: var(--border-radius-sm);
         }
         
         /* Responsive styles */
@@ -904,13 +932,12 @@ $folder_id = $file_info['folder_id'];
                 max-height: 70vh;
             }
             
-            #pdf-viewer, .office-viewer, .preview-text {
+            .secure-canvas-container {
                 height: 70vh;
             }
             
-            .pdf-container {
-                height: calc(70vh - 3.5rem);
-                padding: 1rem;
+            .preview-text {
+                height: 70vh;
             }
             
             .toolbar-title {
@@ -942,51 +969,6 @@ $folder_id = $file_info['folder_id'];
                 width: 2rem;
                 height: 2rem;
             }
-        }
-        
-        /* Custom PDF viewer styles to hide print and download buttons */
-        /* This creates a wrapper for our custom PDF viewer */
-        .custom-pdf-wrapper {
-            position: relative;
-            width: 100%;
-            height: 80vh;
-        }
-        
-        /* The actual PDF viewer iframe */
-        #pdf-viewer {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        /* Overlay to intercept clicks on print/download buttons */
-        .pdf-toolbar-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40px; /* Adjust based on the toolbar height */
-            z-index: 1000;
-            pointer-events: none; /* Allow clicks to pass through by default */
-        }
-        
-        /* These are positioned blocks that will intercept clicks only on the print/download buttons */
-        .block-print-button, .block-download-button {
-            position: absolute;
-            top: 0;
-            height: 40px;
-            width: 40px;
-            pointer-events: auto; /* Block clicks on these specific areas */
-            background: transparent;
-        }
-        
-        /* Position these based on common PDF.js toolbar layouts */
-        .block-print-button {
-            right: 80px; /* Adjust based on your PDF.js viewer */
-        }
-        
-        .block-download-button {
-            right: 40px; /* Adjust based on your PDF.js viewer */
         }
     </style>
 </head>
@@ -1145,7 +1127,7 @@ $folder_id = $file_info['folder_id'];
             <!-- Preview Container -->
             <div class="preview-container">
                 <?php if ($viewer_type === 'image'): ?>
-                <!-- Image Viewer -->
+                <!-- Secure Image Viewer - Using Canvas instead of direct img tag -->
                 <div class="preview-toolbar">
                     <div class="toolbar-left">
                         <span class="toolbar-title">Image Preview</span>
@@ -1157,8 +1139,11 @@ $folder_id = $file_info['folder_id'];
                     </div>
                 </div>
                 <div class="preview-content">
-                    <div class="preview-image-container">
-                        <img src="<?php echo htmlspecialchars($file_path); ?>" class="preview-image" id="previewImage" alt="<?php echo htmlspecialchars($file_name); ?>">
+                    <div class="secure-canvas-container" id="imageContainer">
+                        <canvas id="secureImageCanvas" class="secure-canvas"></canvas>
+                        <div class="watermark-overlay">
+                            <div class="watermark-text"><?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?></div>
+                        </div>
                         <div class="image-controls">
                             <button class="image-control-btn" id="zoomOut" title="Zoom Out">
                                 <i class="fas fa-search-minus"></i>
@@ -1171,36 +1156,54 @@ $folder_id = $file_info['folder_id'];
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
+                        <div class="loading-overlay" id="imageLoading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading image...</div>
+                        </div>
                     </div>
                 </div>
                 
                 <?php elseif ($viewer_type === 'pdf'): ?>
-                <!-- PDF Viewer -->
+                <!-- Secure PDF Viewer - Using Canvas-based rendering -->
                 <div class="preview-toolbar">
                     <div class="toolbar-left">
                         <span class="toolbar-title">PDF Document</span>
                     </div>
                     <div class="toolbar-actions">
+                        <button class="toolbar-btn" id="prevPage" title="Previous Page">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="pdf-page-info" id="pageInfo">Page 1</span>
+                        <button class="toolbar-btn" id="nextPage" title="Next Page">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="toolbar-btn" id="zoomOut" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                        <button class="toolbar-btn" id="zoomIn" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
                         <button class="toolbar-btn" id="toggleFullscreen" title="Toggle Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
                     </div>
                 </div>
-                <div class="preview-content" id="pdfViewerContainer">
-                    <!-- Modified PDF viewer with wrapper and overlay -->
-                    <div class="custom-pdf-wrapper">
-                        <!-- Overlay to block specific buttons -->
-                        <div class="pdf-toolbar-overlay">
-                            <div class="block-print-button"></div>
-                            <div class="block-download-button"></div>
+                <div class="preview-content">
+                    <div class="secure-canvas-container" id="pdfContainer">
+                        <canvas id="securePdfCanvas" class="secure-canvas"></canvas>
+                        <div class="watermark-overlay">
+                            <div class="watermark-text"><?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?></div>
                         </div>
-                        <!-- Use a custom URL parameter to signal we want to hide buttons -->
-                        <iframe id="pdf-viewer" src="<?php echo htmlspecialchars($file_path); ?>#toolbar=1&navpanes=1&scrollbar=1&view=FitH&hideprint=true&hidedownload=true" type="application/pdf"></iframe>
+                        <div class="loading-overlay" id="pdfLoading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading PDF...</div>
+                        </div>
                     </div>
                 </div>
                 
                 <?php elseif ($viewer_type === 'text'): ?>
-                <!-- Text Viewer -->
+                <!-- Text Viewer - Keep as is but add security -->
                 <div class="preview-toolbar">
                     <div class="toolbar-left">
                         <span class="toolbar-title">Text Document</span>
@@ -1212,37 +1215,51 @@ $folder_id = $file_info['folder_id'];
                     </div>
                 </div>
                 <div class="preview-content">
-                    <?php
-                    $text_content = file_get_contents($file_path);
-                    ?>
-                    <textarea class="preview-text" readonly><?php echo htmlspecialchars($text_content); ?></textarea>
+                    <div class="secure-canvas-container">
+                        <?php
+                        $text_content = file_get_contents($file_path);
+                        ?>
+                        <div class="watermark-overlay">
+                            <div class="watermark-text"><?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?></div>
+                        </div>
+                        <textarea class="preview-text" readonly><?php echo htmlspecialchars($text_content); ?></textarea>
+                    </div>
                 </div>
                 
                 <?php elseif ($viewer_type === 'office'): ?>
-                <!-- Office Document Viewer -->
+                <!-- Office Document Viewer - Using server-generated previews -->
                 <div class="preview-toolbar">
                     <div class="toolbar-left">
                         <span class="toolbar-title">Office Document</span>
                     </div>
                     <div class="toolbar-actions">
+                        <button class="toolbar-btn" id="prevPage" title="Previous Page">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="pdf-page-info" id="pageInfo">Page 1</span>
+                        <button class="toolbar-btn" id="nextPage" title="Next Page">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                         <button class="toolbar-btn" id="toggleFullscreen" title="Toggle Fullscreen">
                             <i class="fas fa-expand"></i>
                         </button>
                     </div>
                 </div>
                 <div class="preview-content">
-                    <?php
-                    $encoded_path = urlencode('https://' . $_SERVER['HTTP_HOST'] . str_replace($_SERVER['DOCUMENT_ROOT'], '', $file_path));
-                    ?>
-                    <div class="loading-overlay" id="officeLoading">
-                        <div class="loading-spinner"></div>
-                        <div class="loading-text">Loading document...</div>
+                    <div class="secure-canvas-container" id="officeContainer">
+                        <canvas id="secureOfficeCanvas" class="secure-canvas"></canvas>
+                        <div class="watermark-overlay">
+                            <div class="watermark-text"><?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?></div>
+                        </div>
+                        <div class="loading-overlay" id="officeLoading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Loading document...</div>
+                        </div>
                     </div>
-                    <iframe class="office-viewer" id="officeViewer" src="https://docs.google.com/viewer?url=<?php echo $encoded_path; ?>&embedded=true"></iframe>
                 </div>
                 
                 <?php else: ?>
-                <!-- Unsupported File Format -->
+                <!-- Unsupported File Format - Keep as is -->
                 <div class="preview-content">
                     <div class="unsupported-file">
                         <div class="unsupported-icon">
@@ -1270,436 +1287,355 @@ $folder_id = $file_info['folder_id'];
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sidebar Toggle
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('active');
-            });
+        // Function to log security events to the database
+        function logSecurityEventToDatabase(eventType, details = '') {
+            // Create form data
+            const formData = new FormData();
+            formData.append('file_id', '<?php echo $file_id; ?>');
+            formData.append('event_type', eventType);
+            formData.append('details', details);
             
-            // Close sidebar on small screens when clicking outside
-            document.addEventListener('click', function(e) {
-                if (window.innerWidth < 992 && 
-                    !sidebar.contains(e.target) && 
-                    e.target !== sidebarToggle && 
-                    !sidebarToggle.contains(e.target) && 
-                    sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+            // Send the data using fetch API
+            fetch('log_security_event.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Security event logged successfully');
+            })
+            .catch(error => {
+                console.error('Error logging security event:', error);
             });
         }
         
-        // Toggle fullscreen functionality
-        const toggleFullscreen = document.getElementById('toggleFullscreen');
-        const previewContainer = document.querySelector('.preview-container');
-        
-        if (toggleFullscreen) {
-            toggleFullscreen.addEventListener('click', function() {
-                if (!document.fullscreenElement) {
-                    if (previewContainer.requestFullscreen) {
-                        previewContainer.requestFullscreen();
-                    } else if (previewContainer.mozRequestFullScreen) { /* Firefox */
-                        previewContainer.mozRequestFullScreen();
-                    } else if (previewContainer.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
-                        previewContainer.webkitRequestFullscreen();
-                    } else if (previewContainer.msRequestFullscreen) { /* IE/Edge */
-                        previewContainer.msRequestFullscreen();
-                    }
-                    toggleFullscreen.innerHTML = '<i class="fas fa-compress"></i>';
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    } else if (document.mozCancelFullScreen) {
-                        document.mozCancelFullScreen();
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
-                    }
-                    toggleFullscreen.innerHTML = '<i class="fas fa-expand"></i>';
-                }
-            });
-        }
-        
-        // Image viewer zoom functionality
-        const previewImage = document.getElementById('previewImage');
-        const zoomIn = document.getElementById('zoomIn');
-        const zoomOut = document.getElementById('zoomOut');
-        const resetZoom = document.getElementById('resetZoom');
-        const zoomLevel = document.getElementById('zoomLevel');
-        
-        if (previewImage && zoomIn && zoomOut && resetZoom && zoomLevel) {
-            let currentZoom = 100;
+        // Global security functions
+        function showNotification(message) {
+            // Create notification element
+            var notification = document.createElement('div');
+            notification.className = 'security-notification';
+            notification.style.position = 'fixed';
+            notification.style.top = '50%';
+            notification.style.left = '50%';
+            notification.style.transform = 'translate(-50%, -50%)';
+            notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            notification.style.color = 'white';
+            notification.style.padding = '20px';
+            notification.style.borderRadius = '5px';
+            notification.style.zIndex = '9999';
+            notification.textContent = message;
             
-            function updateZoom() {
-                previewImage.style.transform = `scale(${currentZoom / 100})`;
-                zoomLevel.textContent = `${currentZoom}%`;
-            }
+            // Add to body
+            document.body.appendChild(notification);
             
-            zoomIn.addEventListener('click', function() {
-                currentZoom += 10;
-                if (currentZoom > 200) currentZoom = 200;
-                updateZoom();
-            });
-            
-            zoomOut.addEventListener('click', function() {
-                currentZoom -= 10;
-                if (currentZoom < 50) currentZoom = 50;
-                updateZoom();
-            });
-            
-            resetZoom.addEventListener('click', function() {
-                currentZoom = 100;
-                updateZoom();
-            });
-        }
-        
-        // Office viewer loading indicator
-        const officeViewer = document.getElementById('officeViewer');
-        const officeLoading = document.getElementById('officeLoading');
-        
-        if (officeViewer && officeLoading) {
-            officeViewer.onload = function() {
-                // Hide loading after a short delay to ensure content is rendered
-                setTimeout(function() {
-                    officeLoading.style.display = 'none';
-                }, 1500);
-            };
-            
-            // Fallback if iframe doesn't trigger onload
+            // Remove after delay
             setTimeout(function() {
-                officeLoading.style.display = 'none';
-            }, 8000);
-        }
-        
-        // Responsive behavior
-        function checkSize() {
-            if (window.innerWidth >= 992) {
-                sidebar.classList.remove('active');
-            }
-        }
-        
-        // Check on resize
-        window.addEventListener('resize', checkSize);
-        
-        // Check on load
-        checkSize();
-        
-        <?php if ($viewer_type === 'pdf'): ?>
-        // PDF.js viewer as fallback
-        const pdfViewer = document.getElementById('pdf-viewer');
-        const pdfViewerContainer = document.getElementById('pdfViewerContainer');
-        
-        // Enhanced PDF.js button hiding
-        if (pdfViewer) {
-            // Function to hide print and download buttons in PDF.js viewer
-            function hidePdfButtons() {
-                try {
-                    // Try to access the iframe content
-                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
-                    
-                    if (iframeDoc) {
-                        // Method 1: Inject CSS to hide buttons
-                        const style = document.createElement('style');
-                        style.textContent = `
-                            /* Target buttons by various selectors */
-                            button[data-l10n-id="print"],
-                            button[data-l10n-id="download"],
-                            button[aria-label="Print"],
-                            button[aria-label="Download"],
-                            #print,
-                            #download,
-                            .print,
-                            .download,
-                            .toolbarButton.print,
-                            .toolbarButton.download,
-                            #secondaryPrint,
-                            #secondaryDownload,
-                            .secondaryToolbarButton.print,
-                            .secondaryToolbarButton.download,
-                            [title="Print"],
-                            [title="Download"] {
-                                display: none !important;
-                                visibility: hidden !important;
-                                opacity: 0 !important;
-                                pointer-events: none !important;
-                            }
-                            
-                            /* Target by position if specific selectors fail */
-                            .toolbarButton:nth-last-child(1),
-                            .toolbarButton:nth-last-child(2) {
-                                display: none !important;
-                            }
-                        `;
-                        
-                        iframeDoc.head.appendChild(style);
-                        
-                        // Method 2: Direct DOM manipulation
-                        const selectors = [
-                            'button[data-l10n-id="print"]',
-                            'button[data-l10n-id="download"]',
-                            'button[aria-label="Print"]',
-                            'button[aria-label="Download"]',
-                            '#print',
-                            '#download',
-                            '.print',
-                            '.download',
-                            '.toolbarButton.print',
-                            '.toolbarButton.download',
-                            '#secondaryPrint',
-                            '#secondaryDownload',
-                            '.secondaryToolbarButton.print',
-                            '.secondaryToolbarButton.download',
-                            '[title="Print"]',
-                            '[title="Download"]'
-                        ];
-                        
-                        selectors.forEach(selector => {
-                            const elements = iframeDoc.querySelectorAll(selector);
-                            elements.forEach(el => {
-                                el.style.display = 'none';
-                                el.style.visibility = 'hidden';
-                                el.disabled = true;
-                                el.setAttribute('aria-hidden', 'true');
-                                // Remove event listeners by cloning and replacing
-                                const clone = el.cloneNode(true);
-                                if (el.parentNode) {
-                                    el.parentNode.replaceChild(clone, el);
-                                }
-                            });
-                        });
-                        
-                        // Method 3: Find buttons by their icon content
-                        const allButtons = iframeDoc.querySelectorAll('button');
-                        allButtons.forEach(button => {
-                            // Check if button contains print or download icons
-                            const buttonText = button.textContent.toLowerCase();
-                            const buttonHTML = button.innerHTML.toLowerCase();
-                            if (
-                                buttonText.includes('print') || 
-                                buttonText.includes('download') ||
-                                buttonHTML.includes('print') || 
-                                buttonHTML.includes('download')
-                            ) {
-                                button.style.display = 'none';
-                                button.style.visibility = 'hidden';
-                                button.disabled = true;
-                                button.setAttribute('aria-hidden', 'true');
-                            }
-                        });
-                        
-                        // Method 4: Set up a mutation observer to catch dynamically added buttons
-                        const observer = new MutationObserver(function() {
-                            // Re-run our button hiding logic
-                            selectors.forEach(selector => {
-                                const elements = iframeDoc.querySelectorAll(selector);
-                                elements.forEach(el => {
-                                    el.style.display = 'none';
-                                    el.style.visibility = 'hidden';
-                                    el.disabled = true;
-                                });
-                            });
-                        });
-                        
-                        // Start observing the document with the configured parameters
-                        observer.observe(iframeDoc.body, { 
-                            childList: true, 
-                            subtree: true,
-                            attributes: true,
-                            attributeFilter: ['style', 'class']
-                        });
-                        
-                        // Method 5: Override print and save functions
-                        try {
-                            if (pdfViewer.contentWindow) {
-                                // Override print function
-                                pdfViewer.contentWindow.print = function() {
-                                    console.log('Print function blocked');
-                                    return false;
-                                };
-                                
-                                // Try to access the PDFViewerApplication object
-                                if (pdfViewer.contentWindow.PDFViewerApplication) {
-                                    const app = pdfViewer.contentWindow.PDFViewerApplication;
-                                    
-                                    // Override download methods if they exist
-                                    if (app.download) {
-                                        app.download = function() {
-                                            console.log('Download function blocked');
-                                            return false;
-                                        };
-                                    }
-                                    
-                                    if (app.downloadOrSave) {
-                                        app.downloadOrSave = function() {
-                                            console.log('Download function blocked');
-                                            return false;
-                                        };
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.log('Could not override print/save functions', e);
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error hiding PDF buttons:', e);
-                }
-            }
-            
-            // Position the blocking overlays more precisely
-            function positionBlockers() {
-                try {
-                    const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
-                    
-                    if (iframeDoc) {
-                        // Find the print and download buttons
-                        const printButton = iframeDoc.querySelector('button[data-l10n-id="print"], .print, .toolbarButton.print, button[aria-label="Print"]');
-                        const downloadButton = iframeDoc.querySelector('button[data-l10n-id="download"], .download, .toolbarButton.download, button[aria-label="Download"]');
-                        
-                        if (printButton) {
-                            const rect = printButton.getBoundingClientRect();
-                            const blockPrint = document.querySelector('.block-print-button');
-                            if (blockPrint) {
-                                blockPrint.style.right = 'auto';
-                                blockPrint.style.left = `${rect.left}px`;
-                                blockPrint.style.width = `${rect.width}px`;
-                                blockPrint.style.height = `${rect.height}px`;
-                            }
-                        }
-                        
-                        if (downloadButton) {
-                            const rect = downloadButton.getBoundingClientRect();
-                            const blockDownload = document.querySelector('.block-download-button');
-                            if (blockDownload) {
-                                blockDownload.style.right = 'auto';
-                                blockDownload.style.left = `${rect.left}px`;
-                                blockDownload.style.width = `${rect.width}px`;
-                                blockDownload.style.height = `${rect.height}px`;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error positioning blockers:', e);
-                }
-            }
-            
-            // Try multiple times to hide buttons and position blockers
-            function attemptToHideButtons() {
-                hidePdfButtons();
-                positionBlockers();
-                
-                // Try again after short delays to catch late-loaded elements
-                setTimeout(hidePdfButtons, 500);
-                setTimeout(hidePdfButtons, 1000);
-                setTimeout(hidePdfButtons, 2000);
-                
-                setTimeout(positionBlockers, 500);
-                setTimeout(positionBlockers, 1000);
-                setTimeout(positionBlockers, 2000);
-            }
-            
-            // Call when iframe loads
-            pdfViewer.onload = attemptToHideButtons;
-            
-            // Also try immediately
-            attemptToHideButtons();
-            
-            // Add event listeners to the blocking overlays
-            const blockPrint = document.querySelector('.block-print-button');
-            const blockDownload = document.querySelector('.block-download-button');
-            
-            if (blockPrint) {
-                blockPrint.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Print button click blocked');
-                    return false;
-                });
-            }
-            
-            if (blockDownload) {
-                blockDownload.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Download button click blocked');
-                    return false;
-                });
-            }
-            
-            // Check if the iframe content loaded correctly
-            setTimeout(function() {
-                try {
-                    if (pdfViewer.contentDocument && 
-                        pdfViewer.contentDocument.body && 
-                        pdfViewer.contentDocument.body.innerHTML.trim() === '') {
-                        renderPDFWithPDFJS('<?php echo htmlspecialchars($file_path); ?>');
-                    }
-                } catch (e) {
-                    // CORS error or other issue, switch to PDF.js
-                    renderPDFWithPDFJS('<?php echo htmlspecialchars($file_path); ?>');
-                }
+                document.body.removeChild(notification);
             }, 3000);
         }
         
-        // Function to render PDF with PDF.js as a fallback (without print/download buttons)
-        function renderPDFWithPDFJS(url) {
-            if (!pdfViewerContainer) return;
+        function applySecurityMeasures(element) {
+            // Prevent right-click
+            element.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showNotification("Right-click is disabled.");
+                logSecurityEventToDatabase('right_click', 'User attempted right-click');
+                return false;
+            });
             
-            // Create custom PDF viewer (without print/download buttons)
-            pdfViewerContainer.innerHTML = `
-                <div class="pdf-controls">
-                    <div class="pdf-page-controls">
-                        <button class="toolbar-btn" id="prevPage">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <span class="pdf-page-info" id="pageInfo">Page 1 of 1</span>
-                        <button class="toolbar-btn" id="nextPage">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                    <div class="toolbar-actions">
-                        <button class="toolbar-btn" id="zoomOutPdf">
-                            <i class="fas fa-search-minus"></i>
-                        </button>
-                        <span class="pdf-page-info" id="zoomInfo">100%</span>
-                        <button class="toolbar-btn" id="zoomInPdf">
-                            <i class="fas fa-search-plus"></i>
-                        </button>
-                        <button class="toolbar-btn" id="resetZoomPdf">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="pdf-container" id="pdfContainer">
-                    <div class="loading-overlay" id="pdfLoading">
-                        <div class="loading-spinner"></div>
-                        <div class="loading-text">Loading PDF...</div>
-                    </div>
-                </div>
-            `;
+            // Prevent keyboard shortcuts
+            element.addEventListener('keydown', function(e) {
+                if (e.keyCode == 123 || // F12
+                    (e.ctrlKey && e.shiftKey && e.keyCode == 73) || // Ctrl+Shift+I
+                    (e.ctrlKey && e.shiftKey && e.keyCode == 74) || // Ctrl+Shift+J
+                    (e.ctrlKey && e.keyCode == 83) || // Ctrl+S
+                    (e.ctrlKey && e.keyCode == 85) || // Ctrl+U
+                    (e.keyCode == 44)) { // Print Screen
+                    e.preventDefault();
+                    showNotification("This action is disabled.");
+                    
+                    let shortcutType = '';
+                    if (e.keyCode == 123) shortcutType = 'F12';
+                    else if (e.ctrlKey && e.shiftKey && e.keyCode == 73) shortcutType = 'Ctrl+Shift+I';
+                    else if (e.ctrlKey && e.shiftKey && e.keyCode == 74) shortcutType = 'Ctrl+Shift+J';
+                    else if (e.ctrlKey && e.keyCode == 83) shortcutType = 'Ctrl+S';
+                    else if (e.ctrlKey && e.keyCode == 85) shortcutType = 'Ctrl+U';
+                    else if (e.keyCode == 44) shortcutType = 'Print Screen';
+                    
+                    logSecurityEventToDatabase('keyboard_shortcut', `User attempted keyboard shortcut: ${shortcutType}`);
+                    return false;
+                }
+            });
             
-            const pdfContainer = document.getElementById('pdfContainer');
-            const pageInfo = document.getElementById('pageInfo');
+            // Clear clipboard on Print Screen
+            element.addEventListener('keyup', function(e) {
+                if (e.keyCode == 44) {
+                    navigator.clipboard.writeText('');
+                    showNotification("Print Screen is disabled.");
+                    logSecurityEventToDatabase('screenshot_attempt', 'User attempted Print Screen');
+                }
+            });
+            
+            // Disable text selection
+            element.addEventListener('selectstart', function(e) {
+                e.preventDefault();
+                showNotification("Text selection is disabled.");
+                logSecurityEventToDatabase('text_selection', 'User attempted to select text');
+                return false;
+            });
+            
+            // Disable drag and drop
+            element.addEventListener('dragstart', function(e) {
+                e.preventDefault();
+                showNotification("Dragging is disabled.");
+                logSecurityEventToDatabase('drag_attempt', 'User attempted to drag content');
+                return false;
+            });
+        }
+        
+        // DevTools detection
+        (function() {
+            let devtools = {
+                open: false,
+                orientation: null
+            };
+            
+            const threshold = 160;
+            const emitEvent = (open, orientation) => {
+                window.dispatchEvent(new CustomEvent('devtoolschange', {
+                    detail: {
+                        open,
+                        orientation
+                    }
+                }));
+            };
+            
+            // Check for width/height changes
+            setInterval(() => {
+                const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+                const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+                const orientation = widthThreshold ? 'vertical' : 'horizontal';
+                
+                if (
+                    !(heightThreshold && widthThreshold) &&
+                    ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)
+                ) {
+                    if (!devtools.open || devtools.orientation !== orientation) {
+                        devtools.open = true;
+                        devtools.orientation = orientation;
+                        emitEvent(true, orientation);
+                        showNotification("Developer tools are not allowed.");
+                        logSecurityEventToDatabase('devtools_open', `User opened developer tools (${orientation})`);
+                    }
+                } else {
+                    if (devtools.open) {
+                        devtools.open = false;
+                        devtools.orientation = null;
+                        emitEvent(false, null);
+                    }
+                }
+            }, 500);
+            
+            // Listen for devtools event
+            window.addEventListener('devtoolschange', function(e) {
+                if (e.detail.open) {
+                    showNotification("Developer tools are not allowed.");
+                }
+            });
+            
+            // Check if DevTools is already open when page loads
+            if (
+                window.outerWidth - window.innerWidth > threshold ||
+                window.outerHeight - window.innerHeight > threshold
+            ) {
+                devtools.open = true;
+                devtools.orientation = window.outerWidth - window.innerWidth > threshold ? 'vertical' : 'horizontal';
+                emitEvent(true, devtools.orientation);
+                showNotification("Developer tools are not allowed.");
+                setTimeout(() => {
+                    logSecurityEventToDatabase('devtools_open', `Developer tools were already open (${devtools.orientation})`);
+                }, 1000);
+            }
+        })();
+        
+        // Apply security to the entire document
+        document.addEventListener('DOMContentLoaded', function() {
+            applySecurityMeasures(document);
+            
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                });
+                
+                // Close sidebar on small screens when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (window.innerWidth < 992 && 
+                        !sidebar.contains(e.target) && 
+                        e.target !== sidebarToggle && 
+                        !sidebarToggle.contains(e.target) && 
+                        sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            }
+            
+            <?php if ($viewer_type === 'image'): ?>
+            // Secure Image Viewer Implementation
+            const canvas = document.getElementById('secureImageCanvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('imageContainer');
+            const zoomIn = document.getElementById('zoomIn');
+            const zoomOut = document.getElementById('zoomOut');
+            const resetZoom = document.getElementById('resetZoom');
+            const zoomLevel = document.getElementById('zoomLevel');
+            const imageLoading = document.getElementById('imageLoading');
+            
+            let img = new Image();
+            let currentZoom = 1;
+            let isLoading = true;
+            
+            // Apply security to the canvas container
+            applySecurityMeasures(container);
+            
+            // Additional security for image viewer
+            container.addEventListener('mousedown', function(e) {
+                // Check if it's a middle-click (which can be used to open image in new tab)
+                if (e.button === 1) {
+                    e.preventDefault();
+                    showNotification("Middle-click is disabled.");
+                    logSecurityEventToDatabase('middle_click', 'User attempted middle-click on image');
+                    return false;
+                }
+            });
+            
+            // Load image securely
+            img.crossOrigin = "anonymous";
+            img.onload = function() {
+                isLoading = false;
+                if (imageLoading) imageLoading.style.display = 'none';
+                drawImageToCanvas();
+            };
+            img.onerror = function() {
+                if (imageLoading) imageLoading.style.display = 'none';
+                showNotification("Error loading image.");
+            };
+            img.src = '<?php echo $secure_viewer_url; ?>';
+            
+            function drawImageToCanvas() {
+                // Calculate dimensions
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                
+                // Set canvas size based on image and zoom
+                const canvasWidth = img.width * currentZoom;
+                const canvasHeight = img.height * currentZoom;
+                
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw image with current zoom
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Add watermark text
+                addWatermark(ctx, canvas.width, canvas.height);
+            }
+            
+            function addWatermark(ctx, width, height) {
+                const text = '<?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?>';
+                
+                ctx.save();
+                ctx.globalAlpha = 0.1;
+                ctx.font = '20px Arial';
+                ctx.fillStyle = '#000000';
+                ctx.translate(width/2, height/2);
+                ctx.rotate(-Math.PI/4);
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+            
+            // Zoom controls
+            if (zoomIn) {
+                zoomIn.addEventListener('click', function() {
+                    currentZoom += 0.1;
+                    if (currentZoom > 3) currentZoom = 3;
+                    zoomLevel.textContent = `${Math.round(currentZoom * 100)}%`;
+                    drawImageToCanvas();
+                });
+            }
+            
+            if (zoomOut) {
+                zoomOut.addEventListener('click', function() {
+                    currentZoom -= 0.1;
+                    if (currentZoom < 0.5) currentZoom = 0.5;
+                    zoomLevel.textContent = `${Math.round(currentZoom * 100)}%`;
+                    drawImageToCanvas();
+                });
+            }
+            
+            if (resetZoom) {
+                resetZoom.addEventListener('click', function() {
+                    currentZoom = 1;
+                    zoomLevel.textContent = '100%';
+                    drawImageToCanvas();
+                });
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (!isLoading) {
+                    drawImageToCanvas();
+                }
+            });
+            <?php endif; ?>
+            
+            <?php if ($viewer_type === 'pdf'): ?>
+            // Secure PDF Viewer Implementation
+            const canvas = document.getElementById('securePdfCanvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('pdfContainer');
             const prevPage = document.getElementById('prevPage');
             const nextPage = document.getElementById('nextPage');
-            const zoomOutPdf =  document.getElementById('zoomOutPdf');
-            const zoomInPdf = document.getElementById('zoomInPdf');
-            const resetZoomPdf = document.getElementById('resetZoomPdf');
-            const zoomInfo = document.getElementById('zoomInfo');
+            const pageInfo = document.getElementById('pageInfo');
+            const zoomIn = document.getElementById('zoomIn');
+            const zoomOut = document.getElementById('zoomOut');
+            const zoomLevel = document.getElementById('zoomLevel');
             const pdfLoading = document.getElementById('pdfLoading');
             
-            let currentPage = 1;
             let pdfDoc = null;
-            let scale = 1.5;
+            let currentPage = 1;
+            let currentZoom = 1.5;
             
-            // Load the PDF
-            pdfjsLib.getDocument(url).promise.then(function(pdf) {
+            // Apply security to the PDF container
+            applySecurityMeasures(container);
+            
+            // Additional security for PDF viewer
+            container.addEventListener('mousedown', function(e) {
+                // Check if it's a middle-click
+                if (e.button === 1) {
+                    e.preventDefault();
+                    showNotification("Middle-click is disabled.");
+                    logSecurityEventToDatabase('middle_click', 'User attempted middle-click on PDF');
+                    return false;
+                }
+            });
+            
+            // Load the PDF securely using PDF.js
+            pdfjsLib.getDocument('<?php echo $secure_viewer_url; ?>&type=pdf').promise.then(function(pdf) {
                 pdfDoc = pdf;
-                pageInfo.textContent = `Page ${currentPage} of ${pdf.numPages}`;
+                if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${pdf.numPages}`;
                 
                 // Render the first page
                 renderPage(currentPage);
@@ -1711,60 +1647,56 @@ $folder_id = $file_info['folder_id'];
                 updatePageButtons();
             }).catch(function(error) {
                 console.error('Error loading PDF:', error);
-                if (pdfContainer) {
-                    pdfContainer.innerHTML = `
-                        <div class="unsupported-file">
-                            <div class="unsupported-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h3 class="unsupported-title">Error Loading PDF</h3>
-                            <p class="unsupported-text">There was an error loading the PDF. Please download the file to view it.</p>
-                            <a href="download_file.php?file_id=<?php echo $file_id; ?>" class="btn btn-primary">
-                                <i class="fas fa-download"></i>
-                                <span>Download File</span>
-                            </a>
-                        </div>
-                    `;
-                }
                 if (pdfLoading) pdfLoading.style.display = 'none';
+                
+                // Show error message
+                container.innerHTML = `
+                    <div class="unsupported-file">
+                        <div class="unsupported-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="unsupported-title">Error Loading PDF</h3>
+                        <p class="unsupported-text">There was an error loading the PDF. Please try again later.</p>
+                    </div>
+                `;
             });
             
             // Render a specific page
             function renderPage(pageNum) {
                 pdfDoc.getPage(pageNum).then(function(page) {
-                    const viewport = page.getViewport({ scale: scale });
+                    const viewport = page.getViewport({ scale: currentZoom });
                     
-                    // Check if canvas for this page already exists
-                    let canvas = document.getElementById(`page-${pageNum}`);
-                    if (!canvas) {
-                        canvas = document.createElement('canvas');
-                        canvas.id = `page-${pageNum}`;
-                        canvas.className = 'pdf-page';
-                        pdfContainer.appendChild(canvas);
-                    }
-                    
-                    const context = canvas.getContext('2d');
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
                     
                     // Render PDF page
                     const renderContext = {
-                        canvasContext: context,
+                        canvasContext: ctx,
                         viewport: viewport
                     };
                     
-                    page.render(renderContext);
-                    
-                    // Show only current page
-                    const allPages = document.querySelectorAll('.pdf-page');
-                    allPages.forEach(p => {
-                        p.style.display = 'none';
+                    page.render(renderContext).promise.then(function() {
+                        // Add watermark after rendering
+                        addWatermark(ctx, canvas.width, canvas.height);
+                        
+                        // Scroll to top of container
+                        container.scrollTop = 0;
                     });
-                    canvas.style.display = 'block';
-                    
-                    // Scroll to top of container
-                    pdfContainer.scrollTop = 0;
                 });
+            }
+            
+            function addWatermark(ctx, width, height) {
+                const text = '<?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?>';
+                
+                ctx.save();
+                ctx.globalAlpha = 0.1;
+                ctx.font = '20px Arial';
+                ctx.fillStyle = '#000000';
+                ctx.translate(width/2, height/2);
+                ctx.rotate(-Math.PI/4);
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
             }
             
             // Update page navigation buttons
@@ -1795,34 +1727,212 @@ $folder_id = $file_info['folder_id'];
             }
             
             // Zoom controls
-            if (zoomInPdf) {
-                zoomInPdf.addEventListener('click', function() {
-                    scale += 0.25;
-                    if (scale > 3) scale = 3;
-                    zoomInfo.textContent = `${Math.round(scale * 100 / 1.5)}%`;
+            if (zoomIn) {
+                zoomIn.addEventListener('click', function() {
+                    currentZoom += 0.25;
+                    if (currentZoom > 3) currentZoom = 3;
+                    zoomLevel.textContent = `${Math.round(currentZoom * 100 / 1.5)}%`;
                     renderPage(currentPage);
                 });
             }
             
-            if (zoomOutPdf) {
-                zoomOutPdf.addEventListener('click', function() {
-                    scale -= 0.25;
-                    if (scale < 0.5) scale = 0.5;
-                    zoomInfo.textContent = `${Math.round(scale * 100 / 1.5)}%`;
+            if (zoomOut) {
+                zoomOut.addEventListener('click', function() {
+                    currentZoom -= 0.25;
+                    if (currentZoom < 0.5) currentZoom = 0.5;
+                    zoomLevel.textContent = `${Math.round(currentZoom * 100 / 1.5)}%`;
                     renderPage(currentPage);
+                });
+            }
+            <?php endif; ?>
+            
+            <?php if ($viewer_type === 'office'): ?>
+            // Secure Office Document Viewer Implementation
+            const canvas = document.getElementById('secureOfficeCanvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('officeContainer');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const officeLoading = document.getElementById('officeLoading');
+            
+            let currentPage = 1;
+            let totalPages = 1;
+            let pageImages = [];
+            
+            // Apply security to the office container
+            applySecurityMeasures(container);
+            
+            // Load office document previews
+            fetch('<?php echo $secure_viewer_url; ?>&type=office')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        pageImages = data.pages;
+                        totalPages = pageImages.length;
+                        
+                        if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                        
+                        // Render the first page
+                        renderPage(currentPage);
+                        
+                        // Hide loading indicator
+                        if (officeLoading) officeLoading.style.display = 'none';
+                        
+                        // Enable/disable page navigation buttons
+                        updatePageButtons();
+                    } else {
+                        throw new Error(data.message || 'Failed to load document previews');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading office document:', error);
+                    if (officeLoading) officeLoading.style.display = 'none';
+                    
+                    // Show error message
+                    container.innerHTML = `
+                        <div class="unsupported-file">
+                            <div class="unsupported-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 class="unsupported-title">Error Loading Document</h3>
+                            <p class="unsupported-text">There was an error loading the document. Please try again later.</p>
+                        </div>
+                    `;
+                });
+            
+            // Render a specific page
+            function renderPage(pageNum) {
+                if (!pageImages[pageNum - 1]) return;
+                
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = function() {
+                    // Set canvas size based on image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Add watermark
+                    addWatermark(ctx, canvas.width, canvas.height);
+                    
+                    // Scroll to top of container
+                    container.scrollTop = 0;
+                };
+                img.src = pageImages[pageNum - 1] + '&token=<?php echo $secure_token; ?>';
+            }
+            
+            function addWatermark(ctx, width, height) {
+                const text = '<?php echo htmlspecialchars($user_email); ?> - <?php echo date('Y-m-d H:i:s'); ?>';
+                
+                ctx.save();
+                ctx.globalAlpha = 0.1;
+                ctx.font = '20px Arial';
+                ctx.fillStyle = '#000000';
+                ctx.translate(width/2, height/2);
+                ctx.rotate(-Math.PI/4);
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+            
+            // Update page navigation buttons
+            function updatePageButtons() {
+                if (prevPage) prevPage.disabled = currentPage <= 1;
+                if (nextPage) nextPage.disabled = currentPage >= totalPages;
+            }
+            
+            // Page navigation
+            if (prevPage) {
+                prevPage.addEventListener('click', function() {
+                    if (currentPage <= 1) return;
+                    currentPage--;
+                    renderPage(currentPage);
+                    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                    updatePageButtons();
                 });
             }
             
-            if (resetZoomPdf) {
-                resetZoomPdf.addEventListener('click', function() {
-                    scale = 1.5;
-                    zoomInfo.textContent = '100%';
+            if (nextPage) {
+                nextPage.addEventListener('click', function() {
+                    if (currentPage >= totalPages) return;
+                    currentPage++;
                     renderPage(currentPage);
+                    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                    updatePageButtons();
                 });
             }
-        }
-        <?php endif; ?>
-    });
+            <?php endif; ?>
+            
+            <?php if ($viewer_type === 'text'): ?>
+            // Secure Text Viewer Implementation
+            const textArea = document.querySelector('.preview-text');
+            
+            // Apply security to the text area
+            if (textArea) {
+                applySecurityMeasures(textArea);
+                
+                // Disable copy/paste
+                textArea.addEventListener('copy', function(e) {
+                    e.preventDefault();
+                    showNotification("Copying is disabled.");
+                    logSecurityEventToDatabase('copy_attempt', 'User attempted to copy text');
+                    return false;
+                });
+                
+                textArea.addEventListener('cut', function(e) {
+                    e.preventDefault();
+                    showNotification("Cutting is disabled.");
+                    logSecurityEventToDatabase('cut_attempt', 'User attempted to cut text');
+                    return false;
+                });
+                
+                textArea.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    showNotification("Pasting is disabled.");
+                    logSecurityEventToDatabase('paste_attempt', 'User attempted to paste text');
+                    return false;
+                });
+            }
+            <?php endif; ?>
+            
+            // Toggle fullscreen functionality
+            const toggleFullscreen = document.getElementById('toggleFullscreen');
+            const previewContainer = document.querySelector('.preview-container');
+            
+            if (toggleFullscreen && previewContainer) {
+                toggleFullscreen.addEventListener('click', function() {
+                    if (!document.fullscreenElement) {
+                        if (previewContainer.requestFullscreen) {
+                            previewContainer.requestFullscreen();
+                        } else if (previewContainer.mozRequestFullScreen) {
+                            previewContainer.mozRequestFullScreen();
+                        } else if (previewContainer.webkitRequestFullscreen) {
+                            previewContainer.webkitRequestFullscreen();
+                        } else if (previewContainer.msRequestFullscreen) {
+                            previewContainer.msRequestFullscreen();
+                        }
+                        toggleFullscreen.innerHTML = '<i class="fas fa-compress"></i>';
+                    } else {
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.mozCancelFullScreen) {
+                            document.mozCancelFullScreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) {
+                            document.msExitFullscreen();
+                        }
+                        toggleFullscreen.innerHTML = '<i class="fas fa-expand"></i>';
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

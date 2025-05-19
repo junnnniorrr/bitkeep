@@ -686,6 +686,9 @@ else{
         <a class="nav-link" href="file_log.php">
           <i class="fas fa-file-alt"></i>
           <span>File Logs</span>
+          <a class="nav-link" href="security_logs.php">
+          <i class="fas fa-lock"></i>
+          <span>Security Logs</span>
         </a>
       </li>
     </ul>
