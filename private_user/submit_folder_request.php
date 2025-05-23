@@ -1,5 +1,6 @@
-<?php
-session_start();
+<?php 
+session_start(); 
+
 // Check if user is logged in
 if (!isset($_SESSION["email_address"])) {
     header("location:../login.html");
@@ -8,6 +9,19 @@ if (!isset($_SESSION["email_address"])) {
 
 // Include database connection
 require_once("include/connection.php");
+
+// Function to check and update expired requests
+function checkExpiredRequests($conn) {
+    $expire_query = "UPDATE folder_requests 
+                     SET is_expired = TRUE, status = 'expired' 
+                     WHERE status = 'approved' 
+                     AND expiry_date < NOW() 
+                     AND is_expired = FALSE";
+    $conn->query($expire_query);
+}
+
+// Check for expired requests on page load
+checkExpiredRequests($conn);
 
 // Check if form was submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -50,8 +64,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "User not found in the system";
     }
     
-    // Check if the folder name already exists in the requests
-    $folder_check_query = "SELECT id FROM folder_requests WHERE requested_folder_name = ? AND (status = 'pending' OR status = 'approved')";
+    // Check if the folder name already exists in active requests (not expired)
+    $folder_check_query = "SELECT id FROM folder_requests 
+                          WHERE requested_folder_name = ? 
+                          AND (status = 'pending' OR (status = 'approved' AND is_expired = FALSE AND expiry_date > NOW()))";
     $folder_stmt = $conn->prepare($folder_check_query);
     $folder_stmt->bind_param("s", $requested_folder_name);
     $folder_stmt->execute();
@@ -66,14 +82,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $status = "pending"; // Default status for new requests
         $current_date = date("Y-m-d H:i:s");
         
-        $insert_query = "INSERT INTO folder_requests (user_email, requested_folder_name, reason, status, request_date) 
+        $insert_query = "INSERT INTO folder_requests (user_email, requested_folder_name, reason, status, request_date)
                         VALUES (?, ?, ?, ?, ?)";
         $insert_stmt = $conn->prepare($insert_query);
         $insert_stmt->bind_param("sssss", $user_email, $requested_folder_name, $reason, $status, $current_date);
         
         if ($insert_stmt->execute()) {
             // Success - Set success message in session and redirect
-            $_SESSION['folder_request_success'] = "Your folder request has been submitted successfully and is pending approval.";
+            $_SESSION['folder_request_success'] = "Your folder request has been submitted successfully and is pending approval. If approved, access will expire after 48 hours.";
             header("location: user_dashboard.php");
             exit();
         } else {

@@ -60,6 +60,8 @@ $stmt->close();
       --pending-color: #f59e0b;
       --approved-color: #10b981;
       --rejected-color: #ef4444;
+      --expired-color: #9ca3af;
+      --expiring-color: #f97316;
       --sidebar-width: 250px;
       --navbar-height: 70px;
       --border-radius: 10px;
@@ -322,6 +324,11 @@ $stmt->close();
       color: var(--rejected-color);
     }
     
+    .stat-expired {
+      background-color: #f3f4f6;
+      color: var(--expired-color);
+    }
+    
     .stat-info {
       flex: 1;
     }
@@ -459,6 +466,28 @@ $stmt->close();
     .status-rejected {
       background-color: #fef2f2;
       color: var(--rejected-color);
+    }
+    
+    .status-expired {
+      background-color: #f3f4f6;
+      color: var(--expired-color);
+    }
+    
+    .status-expiring {
+      background-color: #fff7ed;
+      color: var(--expiring-color);
+    }
+    
+    .expiry-date {
+      font-size: 0.85rem;
+      line-height: 1.3;
+    }
+    
+    .expiry-time {
+      color: #718096;
+      font-size: 0.75rem;
+      display: block;
+      margin-top: 2px;
     }
     
     .btn {
@@ -707,7 +736,8 @@ $stmt->close();
           COUNT(*) as total,
           SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending,
           SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) as approved,
-          SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected
+          SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected,
+          SUM(CASE WHEN is_expired = 1 THEN 1 ELSE 0 END) as expired
           FROM folder_requests 
           WHERE user_email = ?");
       $stmt->bind_param("s", $user_email);
@@ -746,6 +776,16 @@ $stmt->close();
             <div class="stat-label">Rejected Requests</div>
           </div>
         </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon stat-expired">
+            <i class="fas fa-calendar-times"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value"><?php echo $stats['expired'] ?? 0; ?></div>
+            <div class="stat-label">Expired Folders</div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -769,11 +809,15 @@ $stmt->close();
                 <th>Status</th>
                 <th>Assigned Folder</th>
                 <th>Request Date</th>
+                <th>Expiry Date</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               <?php
+              // Get current date for expiry calculations
+              $current_date = date('Y-m-d H:i:s');
+              
               // Use prepared statement to prevent SQL injection
               $stmt = $conn->prepare("SELECT fr.*, f.FOLDER_NAME 
                   FROM folder_requests fr
@@ -786,6 +830,23 @@ $stmt->close();
               
               if ($result->num_rows > 0) {
                   while ($row = $result->fetch_assoc()) {
+                      // Calculate days until expiry for approved folders
+                      $expiry_status = '';
+                      $days_remaining = 0;
+                      $is_expired = $row['is_expired'] == 1;
+                      
+                      if (!empty($row['expiry_date'])) {
+                          $expiry_date = new DateTime($row['expiry_date']);
+                          $current = new DateTime($current_date);
+                          $interval = $current->diff($expiry_date);
+                          $days_remaining = $interval->invert ? 0 : $interval->days;
+                          
+                          if ($is_expired || $interval->invert) {
+                              $expiry_status = 'expired';
+                          } elseif ($days_remaining <= 1) {
+                              $expiry_status = 'expiring';
+                          }
+                      }
                       ?>
                       <tr>
                           <td data-label="Requested Folder">
@@ -804,28 +865,33 @@ $stmt->close();
                               $status = strtolower($row['status']);
                               $statusIcon = '';
                               $statusClass = '';
+                              $statusText = ucfirst($status);
                               
-                              switch($status) {
-                                  case 'pending':
-                                      $statusIcon = 'clock';
-                                      $statusClass = 'status-pending';
-                                      break;
-                                  case 'approved':
-                                      $statusIcon = 'check-circle';
-                                      $statusClass = 'status-approved';
-                                      break;
-                                  case 'rejected':
-                                      $statusIcon = 'times-circle';
-                                      $statusClass = 'status-rejected';
-                                      break;
-                                  default:
-                                      $statusIcon = 'question-circle';
-                                      $statusClass = 'status-pending';
+                              if ($status == 'approved' && $expiry_status == 'expired') {
+                                  $statusIcon = 'calendar-times';
+                                  $statusClass = 'status-expired';
+                                  $statusText = 'Expired';
+                              } elseif ($status == 'approved' && $expiry_status == 'expiring') {
+                                  $statusIcon = 'exclamation-circle';
+                                  $statusClass = 'status-expiring';
+                                  $statusText = 'Expiring Soon';
+                              } elseif ($status == 'approved') {
+                                  $statusIcon = 'check-circle';
+                                  $statusClass = 'status-approved';
+                              } elseif ($status == 'rejected') {
+                                  $statusIcon = 'times-circle';
+                                  $statusClass = 'status-rejected';
+                              } elseif ($status == 'pending') {
+                                  $statusIcon = 'clock';
+                                  $statusClass = 'status-pending';
+                              } else {
+                                  $statusIcon = 'question-circle';
+                                  $statusClass = 'status-pending';
                               }
                               ?>
                               <span class="status-badge <?php echo $statusClass; ?>">
                                   <i class="fas fa-<?php echo $statusIcon; ?>"></i>
-                                  <?php echo ucfirst($status); ?>
+                                  <?php echo $statusText; ?>
                               </span>
                           </td>
                           <td data-label="Assigned Folder">
@@ -849,17 +915,48 @@ $stmt->close();
                           <td data-label="Request Date">
                               <?php echo date('M d, Y g:i A', strtotime($row['request_date'])); ?>
                           </td>
+                          <td data-label="Expiry Date">
+                              <?php 
+                              if (!empty($row['expiry_date']) && $status != 'rejected' && $status != 'pending') {
+                                  if ($expiry_status == 'expired') {
+                                      echo '<span class="status-badge status-expired">';
+                                      echo '<i class="fas fa-calendar-times"></i> Expired';
+                                      echo '</span>';
+                                  } elseif ($expiry_status == 'expiring') {
+                                      echo '<span class="status-badge status-expiring">';
+                                      echo '<i class="fas fa-exclamation-circle"></i> ';
+                                      echo '<div class="expiry-date">';
+                                      echo date('M d, Y', strtotime($row['expiry_date']));
+                                      echo '<span class="expiry-time">' . date('g:i A', strtotime($row['expiry_date'])) . '</span>';
+                                      echo '</div>';
+                                      echo '</span>';
+                                  } else {
+                                      echo '<div class="expiry-date">';
+                                      echo date('M d, Y', strtotime($row['expiry_date']));
+                                      echo '<span class="expiry-time">' . date('g:i A', strtotime($row['expiry_date'])) . '</span>';
+                                      echo '</div>';
+                                  }
+                              } else {
+                                  echo '<span class="text-muted">N/A</span>';
+                              }
+                              ?>
+                          </td>
                           <td data-label="Action">
                               <?php 
-                              if (isset($row['assigned_folder_id']) && !empty($row['assigned_folder_id']) && $status == 'approved') {
+                              // Fix for the action column
+                              if ($status == 'approved' && !$is_expired && isset($row['assigned_folder_id']) && !empty($row['assigned_folder_id'])) {
                                   echo '<a href="manage_folder.php?folder_id=' . urlencode($row['assigned_folder_id']) . '" class="btn btn-primary">';
                                   echo '<i class="fas fa-folder-open"></i> Open';
                                   echo '</a>';
-                              } else if ($status == 'pending') {
+                              } elseif ($expiry_status == 'expired') {
+                                  echo '<a href="request_folder.php" class="btn btn-outline">';
+                                  echo '<i class="fas fa-sync"></i> Request again';
+                                  echo '</a>';
+                              } elseif ($status == 'pending') {
                                   echo '<span class="status-badge status-pending">';
                                   echo '<i class="fas fa-clock"></i> Awaiting Approval';
                                   echo '</span>';
-                              } else if ($status == 'rejected') {
+                              } elseif ($status == 'rejected') {
                                   echo '<span class="status-badge status-rejected">';
                                   echo '<i class="fas fa-ban"></i> Rejected';
                                   echo '</span>';
@@ -876,7 +973,7 @@ $stmt->close();
               } else {
                   ?>
                   <tr>
-                      <td colspan="6">
+                      <td colspan="7">
                           <div class="empty-state">
                               <div class="empty-icon">
                                   <i class="fas fa-folder-open"></i>
