@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 16, 2025 at 01:51 PM
+-- Generation Time: May 23, 2025 at 12:10 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,71 @@ SET time_zone = "+01:00";
 --
 -- Database: `file_management`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CheckAndExpireRequests` ()   BEGIN
+    -- Update expired requests
+    UPDATE `folder_requests` 
+    SET 
+        `is_expired` = TRUE,
+        `status` = 'expired'
+    WHERE 
+        `status` = 'approved' 
+        AND `expiry_date` < NOW() 
+        AND `is_expired` = FALSE;
+    
+    -- Return count of newly expired requests
+    SELECT ROW_COUNT() as expired_count;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `active_approved_requests`
+-- (See below for the actual view)
+--
+CREATE TABLE `active_approved_requests` (
+`id` int(11)
+,`user_email` varchar(255)
+,`requested_folder_name` varchar(255)
+,`reason` text
+,`status` enum('pending','approved','rejected')
+,`admin_email` varchar(255)
+,`assigned_folder_id` int(11)
+,`request_date` timestamp
+,`approval_date` datetime
+,`expiry_date` datetime
+,`is_expired` tinyint(1)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin_file_logs`
+--
+
+CREATE TABLE `admin_file_logs` (
+  `log_id` int(11) NOT NULL,
+  `admin_email` varchar(255) NOT NULL COMMENT 'Email of the admin who performed the action',
+  `file_id` varchar(50) NOT NULL COMMENT 'ID of the file that was affected',
+  `file_name` varchar(255) NOT NULL COMMENT 'Name of the file',
+  `folder_id` varchar(50) NOT NULL COMMENT 'ID of the folder containing the file',
+  `action` enum('delete','download') NOT NULL COMMENT 'Type of action performed',
+  `timestamp` datetime NOT NULL COMMENT 'When the action was performed',
+  `ip_address` varchar(45) DEFAULT NULL COMMENT 'IP address of the admin'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin_file_logs`
+--
+
+INSERT INTO `admin_file_logs` (`log_id`, `admin_email`, `file_id`, `file_name`, `folder_id`, `action`, `timestamp`, `ip_address`) VALUES
+(6, 'deucestod@gmail.com', '16', 'sunziel (2).pdf', '17', 'download', '2025-05-20 00:03:26', '::1');
 
 -- --------------------------------------------------------
 
@@ -61,44 +126,28 @@ CREATE TABLE `admin_logs` (
 --
 
 INSERT INTO `admin_logs` (`id`, `admin_user`, `action`, `created_at`) VALUES
-(1, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 20:25:15'),
-(2, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 20:32:35'),
-(3, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-15 20:33:32'),
-(4, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-15 20:33:44'),
-(5, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-15 20:35:00'),
-(6, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-15 20:35:33'),
-(7, '13', 'Previewed file: A PLUS MEDIA TECHNICAL FEASIBILITY.pdf from folder: FM', '2025-05-15 20:35:59'),
-(8, '13', 'Previewed file: sunziel (1).pdf from folder: FM', '2025-05-15 20:37:13'),
-(9, '13', 'Previewed file: sunziel (1).pdf from folder: FM', '2025-05-15 20:38:02'),
-(10, '13', 'Previewed file: a plus media app letter fm.pdf from folder: UNIQUE FM ', '2025-05-15 20:40:33'),
-(11, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-15 20:44:23'),
-(12, '13', 'Previewed file: sunziel (1).pdf from folder: FM', '2025-05-15 20:44:47'),
-(13, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-15 20:45:01'),
-(14, '13', 'Previewed file: sunziel (1).pdf from folder: FM', '2025-05-15 20:45:18'),
-(15, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 21:02:56'),
-(16, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 21:03:41'),
-(17, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 21:03:55'),
-(18, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-15 21:30:07'),
-(19, '13', 'Previewed file: sunziel (1).pdf from folder: FM', '2025-05-15 21:33:22'),
-(20, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx from folder: VSAT', '2025-05-15 22:08:56'),
-(21, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx from folder: VSAT', '2025-05-15 22:09:07'),
-(22, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-15 22:09:29'),
-(23, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx from folder: VSAT', '2025-05-15 22:09:50'),
-(24, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-15 22:10:10'),
-(25, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx from folder: VSAT', '2025-05-16 04:18:17'),
-(26, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-16 04:18:41'),
-(27, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-16 04:33:51'),
-(28, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-16 04:34:15'),
-(29, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-16 06:51:17'),
-(30, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-16 08:06:43'),
-(31, '13', 'Previewed file: a plus media app letter fm.pdf from folder: UNIQUE FM ', '2025-05-16 08:07:13'),
-(32, '13', 'Previewed file: NCA-FORM-AP01B new.pdf from folder: NEWMONT GHANA ', '2025-05-16 08:44:23'),
-(33, '13', 'Previewed file: NCA-FORM-AP01B new.pdf from folder: NEWMONT GHANA ', '2025-05-16 08:53:56'),
-(34, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-16 08:54:48'),
-(35, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-16 08:55:33'),
-(36, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-16 08:57:23'),
-(37, '13', 'Previewed file: NCA-FORM-AP03C (1)  A PLUS MEDIA.docx from folder: ISP', '2025-05-16 08:58:11'),
-(38, '13', 'Previewed file: BOHYEBA TV LIMITED (6) (2).pdf from folder: FM', '2025-05-16 09:05:01');
+(0, '13', 'Previewed file: NCA-FORM-AP01B A PLUS MEDIA(FM).docx.pdf from folder: FM', '2025-05-19 14:18:31'),
+(0, '13', 'Previewed file: sunziel (2).pdf from folder: Adom Tv', '2025-05-19 22:02:59');
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `expired_requests`
+-- (See below for the actual view)
+--
+CREATE TABLE `expired_requests` (
+`id` int(11)
+,`user_email` varchar(255)
+,`requested_folder_name` varchar(255)
+,`reason` text
+,`status` enum('pending','approved','rejected')
+,`admin_email` varchar(255)
+,`assigned_folder_id` int(11)
+,`request_date` timestamp
+,`approval_date` datetime
+,`expiry_date` datetime
+,`is_expired` tinyint(1)
+);
 
 -- --------------------------------------------------------
 
@@ -111,37 +160,21 @@ CREATE TABLE `file_access_logs` (
   `file_id` int(11) NOT NULL,
   `user_email` varchar(255) NOT NULL,
   `access_type` enum('preview','download') NOT NULL,
-  `access_time` datetime NOT NULL
+  `access_time` datetime NOT NULL,
+  `acknowledgment` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `file_access_logs`
 --
 
-INSERT INTO `file_access_logs` (`id`, `file_id`, `user_email`, `access_type`, `access_time`) VALUES
-(26, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:18:10'),
-(27, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:18:14'),
-(28, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:18:58'),
-(29, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:19:16'),
-(30, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:19:22'),
-(31, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:19:43'),
-(32, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:19:45'),
-(33, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:20:38'),
-(34, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:21:25'),
-(35, 18, 'obeng@gmail.com', 'preview', '2025-05-16 12:21:29'),
-(36, 15, 'obeng@gmail.com', 'preview', '2025-05-16 12:22:43'),
-(37, 15, 'obeng@gmail.com', 'preview', '2025-05-16 12:23:13'),
-(38, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:40:04'),
-(39, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:40:09'),
-(40, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:42:14'),
-(41, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:42:20'),
-(42, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:43:13'),
-(43, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:43:15'),
-(45, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:44:20'),
-(46, 14, 'obeng@gmail.com', 'download', '2025-05-16 12:44:30'),
-(47, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:53:24'),
-(48, 14, 'obeng@gmail.com', 'preview', '2025-05-16 12:56:28'),
-(49, 14, 'obeng@gmail.com', 'preview', '2025-05-16 13:32:39');
+INSERT INTO `file_access_logs` (`id`, `file_id`, `user_email`, `access_type`, `access_time`, `acknowledgment`) VALUES
+(171, 16, 'kwame@gmail.com', 'preview', '2025-05-20 00:10:59', NULL),
+(172, 16, 'kwame@gmail.com', 'preview', '2025-05-20 00:11:00', NULL),
+(173, 16, 'kwame@gmail.com', 'preview', '2025-05-21 19:20:22', NULL),
+(174, 16, 'kwame@gmail.com', 'preview', '2025-05-21 19:20:23', NULL),
+(175, 13, 'kwame@gmail.com', 'preview', '2025-05-23 11:18:22', NULL),
+(176, 13, 'kwame@gmail.com', 'preview', '2025-05-23 11:18:23', NULL);
 
 -- --------------------------------------------------------
 
@@ -200,10 +233,8 @@ INSERT INTO `folder_files` (`id`, `folder_id`, `name`, `file_path`, `size`, `fil
 (12, 9, 'NCA-FORM-AP03C (1)  A PLUS MEDIA.docx', '../uploads/9/NCA-FORM-AP03C (1)  A PLUS MEDIA.docx', '1095302', 'docx', '2025-04-19 12:59:28'),
 (13, 14, 'a plus media app letter fm.pdf', '../uploads/folders/14/a plus media app letter fm.pdf', '397925', 'pdf', '2025-04-19 12:31:18'),
 (14, 12, 'NCA-FORM-AP01B new.pdf', '../uploads/12/NCA-FORM-AP01B new.pdf', '223154', 'pdf', '2025-04-19 16:27:31'),
-(15, 8, 'sunziel (1).pdf', '../uploads/folders/8/sunziel (1).pdf', '10948043', 'pdf', '2025-05-14 13:14:51'),
 (16, 17, 'sunziel (2).pdf', '../uploads/folders/17/sunziel (2).pdf', '10948043', 'pdf', '2025-05-15 16:14:12'),
-(17, 18, 'NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx', '../uploads/folders/18/NCA-FORM-AP03C (1)  A PLUS MEDIA (2).docx', '1095302', 'docx', '2025-05-15 22:45:00'),
-(18, 8, 'BOHYEBA TV LIMITED (6) (2).pdf', '../uploads/folders/8/BOHYEBA TV LIMITED (6) (2).pdf', '616756', 'pdf', '2025-05-16 09:36:33');
+(19, 9, 'd0b799da-a51c-494c-92a9-5f9ae2d098f0_report (1).docx', '../uploads/9/d0b799da-a51c-494c-92a9-5f9ae2d098f0_report (1).docx', '53134', 'docx', '2025-05-16 23:16:16');
 
 -- --------------------------------------------------------
 
@@ -219,19 +250,19 @@ CREATE TABLE `folder_requests` (
   `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `admin_email` varchar(255) DEFAULT NULL,
   `assigned_folder_id` int(11) DEFAULT NULL,
-  `request_date` timestamp NOT NULL DEFAULT current_timestamp()
+  `request_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `approval_date` datetime DEFAULT NULL,
+  `expiry_date` datetime DEFAULT NULL,
+  `is_expired` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `folder_requests`
 --
 
-INSERT INTO `folder_requests` (`id`, `user_email`, `requested_folder_name`, `reason`, `status`, `admin_email`, `assigned_folder_id`, `request_date`) VALUES
-(15, 'obeng@gmail.com', 'NEWMONT GHANA ', 'ifdgjhkml;', 'approved', 'deucestod@gmail.com', 12, '2025-04-19 14:24:35'),
-(16, 'obeng@gmail.com', 'UNIQUE FM', 'lmnjvcfgvhjbnkml;,', 'rejected', 'deucestod@gmail.com', NULL, '2025-04-19 14:26:04'),
-(17, 'obeng@gmail.com', 'FM', 'jhgjhkj', 'approved', 'deucestod@gmail.com', 8, '2025-04-19 14:51:56'),
-(18, 'obeng@gmail.com', 'NEWMONT GHANA ', 'uytgfrddfgh', 'approved', 'deucestod@gmail.com', 12, '2025-05-15 12:26:51'),
-(19, 'obeng@gmail.com', 'Adom Tv', '098uy6tyui', 'approved', 'deucestod@gmail.com', 17, '2025-05-15 15:15:31');
+INSERT INTO `folder_requests` (`id`, `user_email`, `requested_folder_name`, `reason`, `status`, `admin_email`, `assigned_folder_id`, `request_date`, `approval_date`, `expiry_date`, `is_expired`) VALUES
+(28, 'kwame@gmail.com', 'unique', 'iohs;fx', 'approved', 'deucestod@gmail.com', 14, '2025-05-23 11:09:09', '2025-05-23 11:09:25', '2025-05-24 11:09:28', 1),
+(30, 'kwame@gmail.com', 'tv', 'jdhudfu', 'approved', 'deucestod@gmail.com', 10, '2025-05-23 11:56:18', '2025-05-23 11:56:38', '2025-05-25 11:56:38', 0);
 
 -- --------------------------------------------------------
 
@@ -256,34 +287,39 @@ CREATE TABLE `history_log` (
 --
 
 INSERT INTO `history_log` (`log_id`, `id`, `email_address`, `action`, `actions`, `ip`, `host`, `login_time`, `logout_time`) VALUES
-(0, 1, 'richardsarpong@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'richard', 'May-29-2024 02:36 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'emilyquarshie@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'emily', 'May-30-2024 04:30 PM', 'May-14-2025 01:22 PM'),
-(0, 0, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'DESKTOP-342LEGC', 'Jan-24-2025 03:07 PM', 'Apr-19-2025 04:27 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 07:28 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 07:58 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:00 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:05 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:19 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:23 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:31 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 05:45 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:47 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:49 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:54 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:55 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 08:13 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 08:16 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 10:37 AM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 10:47 AM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:11 AM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:11 AM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:12 AM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 04:29 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 07:39 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-14-2025 12:37 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-14-2025 12:37 PM', 'May-14-2025 01:22 PM'),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-15-2025 07:51 AM', ''),
-(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 07:52 AM', '');
+(0, 1, 'richardsarpong@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'richard', 'May-29-2024 02:36 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'emilyquarshie@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'emily', 'May-30-2024 04:30 PM', 'May-19-2025 07:54 AM'),
+(0, 0, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'DESKTOP-342LEGC', 'Jan-24-2025 03:07 PM', 'May-19-2025 06:50 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 07:28 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 07:58 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:00 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:05 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:19 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:23 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-13-2025 08:31 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 05:45 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:47 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:49 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:54 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 06:55 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 08:13 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-18-2025 08:16 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 10:37 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 10:47 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:11 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:11 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 11:12 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 04:29 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 07:39 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-14-2025 12:37 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-14-2025 12:37 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-15-2025 07:51 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 07:52 AM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 05:05 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 05:25 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 05:25 PM', 'May-19-2025 07:54 AM'),
+(0, 1, 'obeng@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-19-2025 07:01 AM', 'May-19-2025 07:54 AM'),
+(0, 3, 'kwame@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-19-2025 07:54 AM', '');
 
 -- --------------------------------------------------------
 
@@ -344,7 +380,11 @@ INSERT INTO `history_log1` (`log_id`, `id`, `admin_user`, `action`, `actions`, `
 (0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'Apr-19-2025 07:24 PM', 'May-16-2025 07:52 AM'),
 (0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-14-2025 12:31 PM', 'May-16-2025 07:52 AM'),
 (0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-15-2025 08:04 AM', 'May-16-2025 07:52 AM'),
-(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 07:57 AM', '');
+(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 07:57 AM', ''),
+(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-16-2025 10:11 PM', ''),
+(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-17-2025 09:54 AM', ''),
+(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-19-2025 07:00 AM', ''),
+(0, 13, 'deucestod@gmail.com', 'Has LoggedIn the system at', 'Has LoggedOut the system at', '::1', 'jnr', 'May-19-2025 07:54 AM', '');
 
 -- --------------------------------------------------------
 
@@ -366,7 +406,43 @@ CREATE TABLE `login_user` (
 --
 
 INSERT INTO `login_user` (`id`, `name`, `email_address`, `user_password`, `user_status`, `department`) VALUES
-(1, 'Obeng Kwabena Emmanuel ', 'obeng@gmail.com', '$2y$12$YEzbmYfnEdPEtxoLsBFzaeWrgW.9IDAPnYut9mLyx7BmZlwMEiWYS', 'Employee', 'IT');
+(1, 'Obeng Kwabena Emmanuel ', 'obeng@gmail.com', '$2y$12$GDI1Bh2pm4X5dnqrXO6mHO3YCcxrwAdylEm4QdLB5mHo1uQhEjeEu', 'Employee', 'IT'),
+(3, 'hi love', 'kwame@gmail.com', '$2y$12$scNgSPfYKSqPLdob1NDmEOHNF6CyzQp5JwMXLtIwuWULFb7r5fOnW', '', 'IT');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `security_logs`
+--
+
+CREATE TABLE `security_logs` (
+  `id` int(11) NOT NULL,
+  `file_id` int(11) NOT NULL,
+  `user_email` varchar(255) NOT NULL,
+  `event_type` varchar(50) NOT NULL,
+  `details` text DEFAULT NULL,
+  `ip_address` varchar(45) NOT NULL,
+  `user_agent` text DEFAULT NULL,
+  `event_time` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `security_logs`
+--
+
+INSERT INTO `security_logs` (`id`, `file_id`, `user_email`, `event_type`, `details`, `ip_address`, `user_agent`, `event_time`) VALUES
+(47, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 09:40:57'),
+(48, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 09:40:57'),
+(49, 11, 'kwame@gmail.com', 'screenshot_attempt', 'User attempted Print Screen', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 09:41:04'),
+(50, 11, 'kwame@gmail.com', 'screenshot_attempt', 'User attempted Print Screen', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 09:41:35'),
+(51, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 11:14:17'),
+(52, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 11:14:17'),
+(53, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 12:35:13'),
+(54, 11, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 12:35:13'),
+(55, 11, 'kwame@gmail.com', 'screenshot_attempt', 'User attempted Print Screen', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-19 12:35:19'),
+(56, 16, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-20 00:11:05'),
+(57, 16, 'kwame@gmail.com', 'right_click', 'User attempted right-click', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-20 00:11:05'),
+(58, 16, 'kwame@gmail.com', 'screenshot_attempt', 'User attempted Print Screen', '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0', '2025-05-21 19:24:18');
 
 -- --------------------------------------------------------
 
@@ -416,20 +492,43 @@ INSERT INTO `user_logs` (`id`, `email`, `action`, `created_at`) VALUES
 (1, 'obeng@gmail.com', 'Previewed file: NCA-FORM-AP01B new.pdf from folder: NEWMONT GHANA ', '2025-05-16 07:11:08'),
 (2, 'obeng@gmail.com', 'Previewed file: NCA-FORM-AP01B new.pdf from folder: NEWMONT GHANA ', '2025-05-16 07:12:33');
 
+-- --------------------------------------------------------
+
+--
+-- Structure for view `active_approved_requests`
+--
+DROP TABLE IF EXISTS `active_approved_requests`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `active_approved_requests`  AS SELECT `folder_requests`.`id` AS `id`, `folder_requests`.`user_email` AS `user_email`, `folder_requests`.`requested_folder_name` AS `requested_folder_name`, `folder_requests`.`reason` AS `reason`, `folder_requests`.`status` AS `status`, `folder_requests`.`admin_email` AS `admin_email`, `folder_requests`.`assigned_folder_id` AS `assigned_folder_id`, `folder_requests`.`request_date` AS `request_date`, `folder_requests`.`approval_date` AS `approval_date`, `folder_requests`.`expiry_date` AS `expiry_date`, `folder_requests`.`is_expired` AS `is_expired` FROM `folder_requests` WHERE `folder_requests`.`status` = 'approved' AND (`folder_requests`.`is_expired` = 0 OR `folder_requests`.`is_expired` is null) AND `folder_requests`.`expiry_date` > current_timestamp() ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `expired_requests`
+--
+DROP TABLE IF EXISTS `expired_requests`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `expired_requests`  AS SELECT `folder_requests`.`id` AS `id`, `folder_requests`.`user_email` AS `user_email`, `folder_requests`.`requested_folder_name` AS `requested_folder_name`, `folder_requests`.`reason` AS `reason`, `folder_requests`.`status` AS `status`, `folder_requests`.`admin_email` AS `admin_email`, `folder_requests`.`assigned_folder_id` AS `assigned_folder_id`, `folder_requests`.`request_date` AS `request_date`, `folder_requests`.`approval_date` AS `approval_date`, `folder_requests`.`expiry_date` AS `expiry_date`, `folder_requests`.`is_expired` AS `is_expired` FROM `folder_requests` WHERE `folder_requests`.`status` = 'expired' OR `folder_requests`.`status` = 'approved' AND `folder_requests`.`is_expired` = 1 ;
+
 --
 -- Indexes for dumped tables
 --
 
 --
+-- Indexes for table `admin_file_logs`
+--
+ALTER TABLE `admin_file_logs`
+  ADD PRIMARY KEY (`log_id`),
+  ADD KEY `idx_admin_email` (`admin_email`),
+  ADD KEY `idx_file_id` (`file_id`),
+  ADD KEY `idx_folder_id` (`folder_id`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_timestamp` (`timestamp`);
+
+--
 -- Indexes for table `admin_login`
 --
 ALTER TABLE `admin_login`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `admin_logs`
---
-ALTER TABLE `admin_logs`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -459,12 +558,19 @@ ALTER TABLE `folder_files`
 --
 ALTER TABLE `folder_requests`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_assigned_folder` (`assigned_folder_id`);
+  ADD KEY `fk_assigned_folder` (`assigned_folder_id`),
+  ADD KEY `idx_expiry_status` (`status`,`expiry_date`,`is_expired`);
 
 --
 -- Indexes for table `login_user`
 --
 ALTER TABLE `login_user`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `security_logs`
+--
+ALTER TABLE `security_logs`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -484,16 +590,16 @@ ALTER TABLE `user_logs`
 --
 
 --
--- AUTO_INCREMENT for table `admin_logs`
+-- AUTO_INCREMENT for table `admin_file_logs`
 --
-ALTER TABLE `admin_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+ALTER TABLE `admin_file_logs`
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `file_access_logs`
 --
 ALTER TABLE `file_access_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=177;
 
 --
 -- AUTO_INCREMENT for table `folders`
@@ -505,19 +611,25 @@ ALTER TABLE `folders`
 -- AUTO_INCREMENT for table `folder_files`
 --
 ALTER TABLE `folder_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `folder_requests`
 --
 ALTER TABLE `folder_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `login_user`
 --
 ALTER TABLE `login_user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `security_logs`
+--
+ALTER TABLE `security_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `upload_files`
