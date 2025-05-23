@@ -562,7 +562,7 @@ if(!isset($_SESSION["email_address"])){
     </div>
     
     <div class="sidebar-menu">
-      <a href="index.php" class="sidebar-item active">
+      <a href="home.php" class="sidebar-item active">
         <i class="fas fa-home"></i> Dashboard
       </a>
       <a href="add_file.php" class="sidebar-item">

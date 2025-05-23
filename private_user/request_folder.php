@@ -551,7 +551,7 @@ $stmt->close();
   <!-- Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <img src="img/image1.svg" alt="BitKeep Logo">
+     <img src="js/img/Files_Download.png" alt="BitKeep Logo">
     </div>
     <div class="list-group list-group-flush">
       <a href="home.php" class="nav-link">
@@ -664,7 +664,7 @@ $stmt->close();
           </div>
           <div class="guideline-content">
             <div class="guideline-title">Request Approval</div>
-            <p class="guideline-text">Folder requests are typically reviewed within 24-48 hours. You'll receive an email notification once your request is processed.</p>
+            <p class="guideline-text">Folder requests are typically reviewed within 0-30 minutes. You'll receive an email notification once your request is processed.</p>
           </div>
         </div>
         
@@ -684,7 +684,7 @@ $stmt->close();
           </div>
           <div class="guideline-content">
             <div class="guideline-title">Retention Policy</div>
-            <p class="guideline-text">Folders unused for 90 days may be archived or deleted. Regular activity ensures your folder remains active.</p>
+            <p class="guideline-text">Folders expire after 48 hours.</p>
           </div>
         </div>
       </div>

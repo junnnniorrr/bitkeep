@@ -944,16 +944,19 @@ $stmt->close();
   
   <!-- Sidebar -->
   <div class="sidebar">
+    <img src="js/img/Files_Download.png" alt="BitKeep Logo">
     <div class="user-info">
       <div class="user-avatar">
         <i class="fas fa-user"></i>
       </div>
+      
       <div class="user-details">
         <div class="user-name"><?php echo ucwords(htmlentities($user_email)); ?></div>
         <div class="user-role">User</div>
       </div>
     </div>
     
+
     <div class="sidebar-menu">
       <a href="home.php" class="sidebar-item">
         <i class="fas fa-home"></i> Dashboard
