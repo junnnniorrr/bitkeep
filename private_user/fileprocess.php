@@ -59,8 +59,9 @@ if (isset($_POST['save'])) { // if save button on the form is clicked
 //            $rows=mysqli_num_rows($query2);
 //            $user = $_SESSION['email_address'];
 
-        date_default_timezone_set("asia/manila");
-         $time = date("M-d-Y h:i A",strtotime("+0 HOURS"));
+       session_start();
+  date_default_timezone_set("GMT");
+  $time = date("M-d-Y h:i A",strtotime("+0 HOURS"));
 
         // move the uploaded (temporary) file to the specified destination
         if (move_uploaded_file($file, $destination)) {

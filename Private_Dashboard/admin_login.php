@@ -10,7 +10,7 @@ if(isset($_POST["adminlog"])){
 
 
   date_default_timezone_set("GMT");
-  $date = date("M-d-Y h:i A",strtotime("+1 HOURS"));
+  $date = date("M-d-Y h:i A",strtotime("+0 HOURS"));
 
  $username = mysqli_real_escape_string($conn, $_POST["admin_user"]);  
  $password = mysqli_real_escape_string($conn, $_POST["admin_password"]);

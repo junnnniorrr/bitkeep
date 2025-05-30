@@ -6,7 +6,7 @@ require_once("include/connection.php");
 
 session_start();
   date_default_timezone_set("GMT");
-  $time = date("M-d-Y h:i A",strtotime("+1 HOURS"));
+  $time = date("M-d-Y h:i A",strtotime("+0 HOURS"));
 
  $email = $_SESSION['email_address'];
   

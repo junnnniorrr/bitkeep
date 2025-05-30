@@ -41,8 +41,9 @@ if (isset($_POST['save'])) {
                   </script>';
         } else {
 
-            date_default_timezone_set("Asia/Manila");
-            $time = date("M-d-Y h:i A");
+                session_start();
+  date_default_timezone_set("GMT");
+  $time = date("M-d-Y h:i A",strtotime("+0 HOURS"));
 
             if (move_uploaded_file($file, $destination)) {
                 $sql = "INSERT INTO upload_files (name, size, download, timers, admin_status, email)

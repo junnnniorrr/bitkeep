@@ -5,70 +5,224 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Bitkeep Management</title>
+    <title>BitKeep Management - Admin Login</title>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
         integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBGkKGhxE0Pbt/LLOY+sap9uS1ZwnVQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
     <style type="text/css">
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --light-bg: #f8f9fa;
-            --dark-text: #343a40;
-            --border-radius: 0.5rem;
-            --box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
-            --transition: all 0.3s ease-in-out;
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --primary-dark: #020617;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #f1f5f9;
+            --text-dark: #0f172a;
+            --text-light: #64748b;
+            --text-muted: #94a3b8;
+            --background: #ffffff;
+            --surface: #f8fafc;
+            --surface-elevated: #ffffff;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --error: #ef4444;
+            --error-light: #fef2f2;
+            --success: #10b981;
+            --success-light: #f0fdf4;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            
+            /* Enhanced shadows */
+            --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+            --shadow-glow: 0 0 20px var(--accent-glow);
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 50%, var(--accent-dark) 100%);
+            --gradient-surface: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
+            --gradient-text: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--dark-text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--primary);
+            color: var(--text-dark);
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        }
+
+        .floating-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            left: 10%;
+            animation-delay: 0s;
+            animation-duration: 25s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            left: 80%;
+            animation-delay: 5s;
+            animation-duration: 30s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            left: 50%;
+            animation-delay: 10s;
+            animation-duration: 20s;
+        }
+
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            left: 20%;
+            animation-delay: 15s;
+            animation-duration: 35s;
+        }
+
+        .shape:nth-child(5) {
+            width: 140px;
+            height: 140px;
+            left: 70%;
+            animation-delay: 8s;
+            animation-duration: 28s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.1;
+            }
+            90% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         nav {
-            background-color: white;
-            box-shadow: var(--box-shadow);
-            padding: 1rem 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            padding: 1.25rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .navbar-brand {
             display: flex;
             align-items: center;
-            color: var(--primary-color);
-            font-weight: bold;
-            font-size: 1.75rem;
+            color: white !important;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .navbar-brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.4s ease;
+        }
+
+        .navbar-brand:hover::after {
+            width: 100%;
+        }
+
+        .navbar-brand:hover {
+            transform: translateY(-2px);
+            text-shadow: 0 0 20px var(--accent-glow);
         }
 
         .navbar-brand img {
             width: auto;
-            height: 40px;
-            margin-right: 1rem;
+            height: 45px;
+            margin-right: 0.75rem;
+            filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.3));
+            transition: all 0.3s ease;
         }
 
-        .navbar-toggler {
-            border: none;
-            background: transparent;
+        .navbar-brand:hover img {
+            transform: scale(1.05) rotate(5deg);
         }
 
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 123, 255, 0.7)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-        }
-
-        .navbar-nav .nav-link {
-            color: var(--dark-text);
-            padding: 0.75rem 1.2rem;
-            transition: color var(--transition);
-        }
-
-        .navbar-nav .nav-link:hover {
-            color: var(--primary-color);
+        .brand-text {
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .container {
@@ -76,84 +230,305 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 520px;
+            position: relative;
+            animation: slideInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .welcome-icon-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            animation: pulse 3s infinite;
+        }
+
+        .welcome-icon::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: ripple 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: var(--shadow-glow);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px var(--accent-glow);
+            }
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .welcome-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .welcome-title {
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .welcome-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.6;
         }
 
         .card {
             width: 100%;
-            max-width: 450px;
-            margin-top: 2rem;
             border: none;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            border-radius: 28px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            z-index: 1;
         }
 
         .card-body {
-            padding: 2.5rem;
+            padding: 3.5rem 3rem;
+            position: relative;
+            z-index: 2;
         }
 
         .card-title {
-            font-size: 2rem;
-            color: var(--dark-text);
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text-dark);
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 0.75rem;
+            font-weight: 800;
+            line-height: 1.2;
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
             font-weight: 500;
+            line-height: 1.5;
         }
 
         .form-group {
-            margin-bottom: 1.75rem;
+            margin-bottom: 2rem;
+            position: relative;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 0.6rem;
-            color: var(--secondary-color);
-            font-weight: bold;
+            margin-bottom: 0.75rem;
+            color: var(--text-dark);
+            font-weight: 700;
             font-size: 0.9rem;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+        }
+
+        .input-group {
+            position: relative;
+            width: 100%;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            z-index: 3;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
         }
 
         .form-control {
             width: 100%;
-            padding: 0.9rem 1rem;
-            border: 1px solid #e0e0e0;
-            border-radius: var(--border-radius);
-            box-sizing: border-box;
-            font-size: 1rem;
-            transition: border-color var(--transition);
+            padding: 1.25rem 1.25rem 1.25rem 3.25rem;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--surface-elevated);
+            color: var(--text-dark);
+            line-height: 1.5;
+            box-shadow: var(--shadow-inner);
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+            transition: all 0.3s ease;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+            border-color: var(--accent);
+            box-shadow: 
+                0 0 0 4px rgba(99, 102, 241, 0.1),
+                var(--shadow-md);
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .form-control:focus::placeholder {
+            opacity: 0.7;
+            transform: translateX(5px);
+        }
+
+        .form-control:focus + i {
+            color: var(--accent);
+            transform: translateY(-50%) scale(1.1);
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
+            background: var(--gradient-primary);
             color: white;
             border: none;
-            padding: 1rem 1.5rem;
-            border-radius: var(--border-radius);
+            padding: 1.25rem 2rem;
+            border-radius: 16px;
             cursor: pointer;
             font-size: 1.1rem;
-            transition: background-color var(--transition);
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            margin-top: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
         }
 
         .btn-primary:hover {
-            background-color: #0056b3;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-2xl);
+            background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 50%, var(--accent-light) 100%);
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         footer {
-            background-color: white;
-            color: var(--secondary-color);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            color: rgba(255, 255, 255, 0.8);
             text-align: center;
-            padding: 1.5rem;
+            padding: 2rem;
             font-size: 0.9rem;
-            border-top: 1px solid #eee;
-            box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.04);
+            border-top: 1px solid rgba(99, 102, 241, 0.2);
+            font-weight: 500;
         }
 
         #loader {
@@ -165,41 +540,113 @@
             z-index: 9999;
             background: rgba(255, 255, 255, 0.9) url('img/loading.gif') 50% 50% no-repeat;
             opacity: 1;
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        .input-group i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--secondary-color);
-        }
-
-        .input-group .form-control {
-            padding-left: 2.5rem;
+            display: none;
         }
 
         .is-invalid {
-            border-color: #dc3545 !important;
+            border-color: var(--error) !important;
+            background-color: var(--error-light) !important;
         }
 
         .is-invalid:focus {
-            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .is-invalid + i {
+            color: var(--error) !important;
+        }
+
+        /* Enhanced responsive design */
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 2.5rem 2rem;
+            }
+            
+            .card-title {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            
+            .navbar-brand img {
+                height: 38px;
+            }
+            
+            .welcome-icon {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .welcome-icon i {
+                font-size: 1.75rem;
+            }
+            
+            .form-control {
+                padding: 1rem 1rem 1rem 3rem;
+                font-size: 1rem;
+            }
+            
+            .input-group i {
+                font-size: 1rem;
+            }
+        }
+
+        /* Focus states for accessibility */
+        .btn-primary:focus,
+        .form-control:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Smooth page transitions */
+        .page-transition {
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Animation for form validation */
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
     </style>
 </head>
 
-<body>
+<body class="page-transition">
+    <!-- Animated background -->
+    <div class="background-animation"></div>
+    
+    <!-- Floating shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
 
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">
                 <img src="img/image1.svg" alt="Bitkeep Logo">
-                Bitkeep
+                <span><span class="brand-text">BIT</span>KEEP</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -207,41 +654,68 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    </ul>
+                </ul>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="card">
-            <div id="loader" style="display: none;"></div>
-            <div class="card-body">
-                <h5 class="card-title">Admin Login</h5>
-                <form action="admin_login.php" method="POST">
-                    <div class="form-group input-group">
-                        <i class="fa fa-envelope"></i>
-                        <input type="email" id="admin_user" name="admin_user" class="form-control"
-                            placeholder="Enter your email" required>
+        <div class="login-wrapper">
+            <div class="welcome-section">
+                <div class="welcome-icon-container">
+                    <div class="welcome-icon">
+                        <i class="fas fa-shield-alt"></i>
                     </div>
-                    <div class="form-group input-group">
-                        <i class="fa fa-lock"></i>
-                        <input type="password" id="admin_password" name="admin_password" class="form-control"
-                            placeholder="Enter your password" required>
-                    </div>
-                    <button class="btn btn-primary btn-lg btn-block" name="adminlog" id="login"
-                        type="submit">Sign In</button>
-                </form>
+                </div>
+                <h2 class="welcome-title">Secure Admin Portal</h2>
+                <p class="welcome-subtitle">Advanced security protocols protect your administrative access</p>
+            </div>
+            
+            <div class="card">
+                <div id="loader" style="display: none;"></div>
+                <div class="card-body">
+                    <h1 class="card-title">Welcome Back</h1>
+                    <p class="card-subtitle">Please authenticate to access your dashboard</p>
+                    
+                    <!-- KEEP ORIGINAL FORM ACTION AND METHOD - DO NOT CHANGE -->
+                    <form action="admin_login.php" method="POST">
+                        <div class="form-group">
+                            <label for="admin_user" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <input type="email" id="admin_user" name="admin_user" class="form-control"
+                                    placeholder="Enter your email address" required>
+                                <i class="fa fa-envelope"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="admin_password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="password" id="admin_password" name="admin_password" class="form-control"
+                                    placeholder="Enter your password" required>
+                                <i class="fa fa-lock"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- KEEP ORIGINAL BUTTON NAME AND TYPE - DO NOT CHANGE -->
+                        <button class="btn btn-primary" name="adminlog" id="login" type="submit">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Access Dashboard
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     <footer class="text-center mt-auto">
-        <p class="mb-0">All rights Reserved &copy; <?php echo date('Y');?> BitKeep Management</p>
+        <p class="mb-0">All rights Reserved &copy; <?php echo date('Y');?> BitKeep Management System</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
         crossorigin="anonymous"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const loginButton = document.getElementById('login');
@@ -276,15 +750,36 @@
 
                 if (!isEmailValid || !isPasswordValid) {
                     event.preventDefault(); // Prevent form submission if validation fails
+                    // Add shake animation to form
+                    document.querySelector('.card').classList.add('shake');
+                    setTimeout(() => {
+                        document.querySelector('.card').classList.remove('shake');
+                    }, 500);
                 } else {
-                    // Simulate loading
+                    // Show loading
                     loader.style.display = 'block';
                     cardBody.style.opacity = '0.7';
                     setTimeout(() => {
                         loader.style.display = 'none';
                         cardBody.style.opacity = '1';
-                        // In a real scenario, the form would submit here
+                        // Form will submit naturally here
                     }, 1500);
+                }
+            });
+
+            // Real-time validation
+            emailInput.addEventListener('blur', validateEmail);
+            passwordInput.addEventListener('blur', validatePassword);
+            
+            emailInput.addEventListener('input', function() {
+                if (emailInput.classList.contains('is-invalid')) {
+                    validateEmail();
+                }
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                if (passwordInput.classList.contains('is-invalid')) {
+                    validatePassword();
                 }
             });
         });
