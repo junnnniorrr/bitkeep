@@ -902,6 +902,35 @@ $stmt->close();
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       }
     }
+
+    .form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.form-text i {
+  color: #007bff;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(84, 105, 212, 0.25);
+}
+
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+/* Style for the reference number input */
+#reference_number {
+  transition: all 0.3s ease;
+}
+
+#reference_number:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(84, 105, 212, 0.15);
+}
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -1054,53 +1083,56 @@ $stmt->close();
     $error = "";
 
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["upload"])) {
-        // Check if file was uploaded without errors
-        if (isset($_FILES["file"]) && $_FILES["file"]["error"] == 0) {
-            $target_dir = "../uploads/" . $folder_id . "/";
-            
-            // Create directory if it doesn't exist
-            if (!file_exists($target_dir)) {
-                mkdir($target_dir, 0755, true);
-            }
-            
-            $file_name = basename($_FILES["file"]["name"]);
-            $target_file = $target_dir . $file_name;
-            $file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-            $file_size = $_FILES["file"]["size"];
-            
-            // Check file size (limit to 10MB)
-            if ($file_size > 10000000) {
-                $error = "File is too large. Maximum size is 10MB.";
-            } 
-            // Allow certain file formats
-            else if (!in_array($file_type, ["pdf", "doc", "docx", "txt", "jpg", "jpeg", "png", "xlsx", "xls", "ppt", "pptx"])) {
-                $error = "Only PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, XLS, XLSX, PPT, and PPTX files are allowed.";
-            } 
-            // Check if file already exists
-            else if (file_exists($target_file)) {
-                $error = "File already exists. Please rename your file or upload a different one.";
-            } 
-            // Try to upload file
-            else if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
-                $upload_date = date("Y-m-d H:i:s");
-                
-                // Save file info to database - using the correct column names
-                $stmt = $conn->prepare("INSERT INTO folder_files (folder_id, name, file_path, size, file_type, timers) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssiss", $folder_id, $file_name, $target_file, $file_size, $file_type, $upload_date);
-                
-                if ($stmt->execute()) {
-                    $message = "File uploaded successfully.";
-                } else {
-                    $error = "Error recording file in database: " . $stmt->error;
-                }
-                $stmt->close();
-            } else {
-                $error = "Sorry, there was an error uploading your file.";
-            }
-        } else {
-            $error = "Error: " . $_FILES["file"]["error"];
+    // Check if file was uploaded without errors
+    if (isset($_FILES["file"]) && $_FILES["file"]["error"] == 0) {
+        $target_dir = "../uploads/" . $folder_id . "/";
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0755, true);
         }
+        
+        $file_name = basename($_FILES["file"]["name"]);
+        $target_file = $target_dir . $file_name;
+        $file_type = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+        $file_size = $_FILES["file"]["size"];
+        
+        // Get reference number from form (optional field)
+        $reference_number = !empty($_POST["reference_number"]) ? trim($_POST["reference_number"]) : null;
+        
+        // Check file size (limit to 10MB)
+        if ($file_size > 10000000) {
+            $error = "File is too large. Maximum size is 10MB.";
+        } 
+        // Allow certain file formats
+        else if (!in_array($file_type, ["pdf", "doc", "docx", "txt", "jpg", "jpeg", "png", "xlsx", "xls", "ppt", "pptx"])) {
+            $error = "Only PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, XLS, XLSX, PPT, and PPTX files are allowed.";
+        } 
+        // Check if file already exists
+        else if (file_exists($target_file)) {
+            $error = "File already exists. Please rename your file or upload a different one.";
+        } 
+        // Try to upload file
+        else if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
+            $upload_date = date("Y-m-d H:i:s");
+            
+            // Save file info to database - including reference_number
+            $stmt = $conn->prepare("INSERT INTO folder_files (folder_id, name, file_path, size, file_type, timers, reference_number) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssss", $folder_id, $file_name, $target_file, $file_size, $file_type, $upload_date, $reference_number);
+            
+            if ($stmt->execute()) {
+                $message = "File uploaded successfully.";
+            } else {
+                $error = "Error recording file in database: " . $stmt->error;
+            }
+            $stmt->close();
+        } else {
+            $error = "Sorry, there was an error uploading your file.";
+        }
+    } else {
+        $error = "Error: " . $_FILES["file"]["error"];
     }
+}
 
     // Handle file deletion
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["delete"]) && isset($_POST["file_id"])) {
@@ -1336,130 +1368,152 @@ $stmt->close();
 
     <!-- Upload Card -->
     <div class="upload-card">
-      <div class="upload-header">
-        <h2 class="upload-title">
-          <i class="fas fa-cloud-upload-alt upload-icon"></i>
-          Upload New File
-        </h2>
-      </div>
-      
-      <form action="" method="POST" enctype="multipart/form-data" id="uploadForm">
-        <div class="dropzone" id="dropzone">
-          <input type="file" name="file" id="fileInput" class="file-input" required>
-          <div class="dropzone-icon">
-            <i class="fas fa-file-upload"></i>
-          </div>
-          <h4 class="dropzone-text">Drag & drop files here or click to browse</h4>
-          <p class="dropzone-hint">Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, XLS, XLSX, PPT, PPTX (Max: 10MB)</p>
-        </div>
-        
-        <div id="selectedFile" style="display: none;" class="selected-file">
-          <i class="fas fa-file selected-file-icon" id="selectedFileIcon"></i>
-          <span class="selected-file-name" id="selectedFileName">filename.pdf</span>
-          <span class="selected-file-size" id="selectedFileSize">2.5 MB</span>
-          <i class="fas fa-times selected-file-remove" id="removeFile"></i>
-        </div>
-        
-        <div class="upload-actions">
-          <button type="submit" name="upload" class="btn btn-primary">
-            <i class="fas fa-upload me-2"></i> Upload File
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Files Card -->
-    <div class="files-card">
-      <div class="files-header">
-        <h2 class="files-title">
-          <i class="fas fa-file-alt files-icon"></i>
-          Files in Folder
-        </h2>
-        
-        <?php
-        // Get all files in this folder
-        $stmt = $conn->prepare("SELECT * FROM folder_files WHERE folder_id = ? ORDER BY timers DESC");
-        $stmt->bind_param("s", $folder_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $file_count = $result->num_rows;
-        ?>
-        
-        <span class="files-count"><?php echo $file_count; ?> files</span>
-      </div>
-      
-      <div class="files-table-container">
-        <?php if ($file_count > 0): ?>
-        <table class="files-table" id="filesTable">
-          <thead>
-            <tr>
-              <th>File Name</th>
-              <th>Type</th>
-              <th>Size</th>
-              <th>Upload Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php while ($row = $result->fetch_assoc()): ?>
-            <tr class="file-row">
-              <td>
-                <div class="file-cell">
-                  <div class="file-cell-icon <?php echo getFileIconClass($row['file_type']); ?>">
-                    <i class="fas <?php echo getFileIcon($row['file_type']); ?>"></i>
-                  </div>
-                  <div>
-                    <div class="file-cell-name"><?php echo htmlspecialchars($row['name']); ?></div>
-                    <div class="file-cell-info"></div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="file-type-badge"><?php echo strtoupper(htmlspecialchars($row['file_type'])); ?></span>
-              </td>
-              <td>
-                <?php echo formatFileSize($row['size']); ?>
-              </td>
-              <td>
-                <?php echo date('M d, Y g:i A', strtotime($row['timers'])); ?>
-              </td>
-              <td>
-                <div class="file-actions">
-                  <a href="preview_files.php?file_id=<?php echo $row['id']; ?>&folder_id=<?php echo $folder_id; ?>" class="file-action-btn preview" title="Preview">
-                    <i class="fas fa-eye"></i>
-                  </a>
-                  <!--a href="<?php echo htmlspecialchars($row['file_path']); ?>" class="file-action-btn download" download title="Download">
-                    <i class="fas fa-download"></i>
-                  </a>
-                  <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this file?')">
-                    <input type="hidden" name="file_id" value="<?php echo $row['id']; ?>">
-                    <button type="submit" name="delete" class="file-action-btn delete" title="Delete">
-                      <i class="fas fa-trash-alt"></i>
-                    </button-->
-                  </form>
-                </div>
-              </td>
-            </tr>
-            <?php endwhile; ?>
-          </tbody>
-        </table>
-        <?php else: ?>
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fas fa-folder-open"></i>
-          </div>
-          <h3 class="empty-state-title">No files in this folder yet</h3>
-          <p class="empty-state-text">Upload a file to get started</p>
-          <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-upload me-2"></i> Upload Your First File
-          </button>
-        </div>
-        <?php endif;
-        $stmt->close();
-        ?>
+  <div class="upload-header">
+    <h2 class="upload-title">
+      <i class="fas fa-cloud-upload-alt upload-icon"></i>
+      Upload New File
+    </h2>
+  </div>
+  
+  <form action="" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <!-- Reference Number Field -->
+    <div class="mb-3">
+      <label for="reference_number" class="form-label">
+        <i class="fas fa-hashtag me-2"></i>Reference Number (Optional)
+      </label>
+      <input type="text" 
+             class="form-control" 
+             id="reference_number" 
+             name="reference_number" 
+             placeholder="Enter reference number (e.g., REF-2025-001)"
+             maxlength="100">
+      <div class="form-text">
+        <i class="fas fa-info-circle me-1"></i>
+        Optional field to help identify and organize your files
       </div>
     </div>
     
+    <div class="dropzone" id="dropzone">
+      <input type="file" name="file" id="fileInput" class="file-input" required>
+      <div class="dropzone-icon">
+        <i class="fas fa-file-upload"></i>
+      </div>
+      <h4 class="dropzone-text">Drag & drop files here or click to browse</h4>
+      <p class="dropzone-hint">Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, XLS, XLSX, PPT, PPTX (Max: 10MB)</p>
+    </div>
+    
+    <div id="selectedFile" style="display: none;" class="selected-file">
+      <i class="fas fa-file selected-file-icon" id="selectedFileIcon"></i>
+      <span class="selected-file-name" id="selectedFileName">filename.pdf</span>
+      <span class="selected-file-size" id="selectedFileSize">2.5 MB</span>
+      <i class="fas fa-times selected-file-remove" id="removeFile"></i>
+    </div>
+    
+    <div class="upload-actions">
+      <button type="submit" name="upload" class="btn btn-primary">
+        <i class="fas fa-upload me-2"></i> Upload File
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Files Card -->
+<div class="files-card">
+  <div class="files-header">
+    <h2 class="files-title">
+      <i class="fas fa-file-alt files-icon"></i>
+      Files in Folder
+    </h2>
+             
+    <?php
+    // Get all files in this folder
+    $stmt = $conn->prepare("SELECT * FROM folder_files WHERE folder_id = ? ORDER BY timers DESC");
+    $stmt->bind_param("s", $folder_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $file_count = $result->num_rows;
+    ?>
+             
+    <span class="files-count"><?php echo $file_count; ?> files</span>
+  </div>
+         
+  <div class="files-table-container">
+    <?php if ($file_count > 0): ?>
+    <table class="files-table" id="filesTable">
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Reference Number</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Upload Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php while ($row = $result->fetch_assoc()): ?>
+        <tr class="file-row">
+          <td>
+            <div class="file-cell">
+              <div class="file-cell-icon <?php echo getFileIconClass($row['file_type']); ?>">
+                <i class="fas <?php echo getFileIcon($row['file_type']); ?>"></i>
+              </div>
+              <div>
+                <div class="file-cell-name"><?php echo htmlspecialchars($row['name']); ?></div>
+                <div class="file-cell-info"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="reference-number">
+              <?php echo !empty($row['reference_number']) ? htmlspecialchars($row['reference_number']) : '<span class="text-muted">Not assigned</span>'; ?>
+            </span>
+          </td>
+          <td>
+            <span class="file-type-badge"><?php echo strtoupper(htmlspecialchars($row['file_type'])); ?></span>
+          </td>
+          <td>
+            <?php echo formatFileSize($row['size']); ?>
+          </td>
+          <td>
+            <?php echo date('M d, Y g:i A', strtotime($row['timers'])); ?>
+          </td>
+          <td>
+            <div class="file-actions">
+              <a href="preview_files.php?file_id=<?php echo $row['id']; ?>&folder_id=<?php echo $folder_id; ?>" class="file-action-btn preview" title="Preview">
+                <i class="fas fa-eye"></i>
+              </a>
+              <!--a href="<?php echo htmlspecialchars($row['file_path']); ?>" class="file-action-btn download" download title="Download">
+                <i class="fas fa-download"></i>
+              </a>
+              <form method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this file?')">
+                <input type="hidden" name="file_id" value="<?php echo $row['id']; ?>">
+                <button type="submit" name="delete" class="file-action-btn delete" title="Delete">
+                  <i class="fas fa-trash-alt"></i>
+                </button-->
+              </form>
+            </div>
+          </td>
+        </tr>
+        <?php endwhile; ?>
+      </tbody>
+    </table>
+    <?php else: ?>
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="fas fa-folder-open"></i>
+      </div>
+      <h3 class="empty-state-title">No files in this folder yet</h3>
+      <p class="empty-state-text">Upload a file to get started</p>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+        <i class="fas fa-upload me-2"></i> Upload Your First File
+      </button>
+    </div>
+    <?php endif;
+    $stmt->close();
+    ?>
+  </div>
+</div>
     <!-- Footer -->
     <footer class="mt-4 text-center text-muted">
       <p class="small mb-0">BitKeep Management System &copy; 2025. All rights reserved.</p>

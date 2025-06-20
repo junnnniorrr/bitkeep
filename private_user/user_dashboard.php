@@ -874,7 +874,7 @@ $stmt->close();
                               } elseif ($status == 'approved' && $expiry_status == 'expiring') {
                                   $statusIcon = 'exclamation-circle';
                                   $statusClass = 'status-expiring';
-                                  $statusText = 'Expiring Soon';
+                                  $statusText = 'Approved (Expiring Soon)';
                               } elseif ($status == 'approved') {
                                   $statusIcon = 'check-circle';
                                   $statusClass = 'status-approved';
