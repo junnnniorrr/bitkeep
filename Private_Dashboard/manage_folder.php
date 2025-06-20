@@ -1010,116 +1010,124 @@ $admin_email = $row_admin['admin_user'];
           </div>
         <?php endif; ?>
       </div>
-
-      <!-- Files Table -->
-      <div class="table-container animate-slide-up">
-        <h5 class="mb-4"><i class="fas fa-file me-2 text-primary"></i>Files in <?php echo htmlspecialchars($folder['FOLDER_NAME']); ?></h5>
-        
-        <?php if ($result_files && mysqli_num_rows($result_files) > 0): ?>
-          <table id="filesTable" class="table table-hover">
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Size (KB)</th>
-                <th>Upload Time</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php while ($file = mysqli_fetch_assoc($result_files)): ?>
-                <tr>
-                  <td>
-                    <?php 
-                    $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                    $icon_class = 'fa-file';
-                    
-                    // Determine icon based on file extension
-                    switch(strtolower($file_extension)) {
-                      case 'pdf':
-                        $icon_class = 'fa-file-pdf';
-                        break;
-                      case 'doc':
-                      case 'docx':
-                        $icon_class = 'fa-file-word';
-                        break;
-                      case 'xls':
-                      case 'xlsx':
-                        $icon_class = 'fa-file-excel';
-                        break;
-                      case 'ppt':
-                      case 'pptx':
-                        $icon_class = 'fa-file-powerpoint';
-                        break;
-                      case 'jpg':
-                      case 'jpeg':
-                      case 'png':
-                      case 'gif':
-                        $icon_class = 'fa-file-image';
-                        break;
-                      case 'zip':
-                      case 'rar':
-                        $icon_class = 'fa-file-archive';
-                        break;
-                      case 'mp3':
-                      case 'wav':
-                        $icon_class = 'fa-file-audio';
-                        break;
-                      case 'mp4':
-                      case 'avi':
-                        $icon_class = 'fa-file-video';
-                        break;
-                      case 'txt':
-                        $icon_class = 'fa-file-alt';
-                        break;
-                    }
-                    ?>
-                    <i class="fas <?php echo $icon_class; ?> me-2 text-primary"></i>
-                    <?php echo htmlspecialchars($file['name']); ?>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark">
-                      <?php echo number_format($file['size'], 2); ?> KB
-                    </span>
-                  </td>
-                  <td><?php echo date('M d, Y H:i', strtotime($file['timers'])); ?></td>
-                  <td>
-                    <div class="btn-group">
-                      <a href="view_files.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-success">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                      <a href="download_file.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-info">
-                        <i class="fas fa-download"></i>
-                      </a>
-                      <a href="delete_file.php?file_id=<?php echo $file['id']; ?>&folder_id=<?php echo $folder_id; ?>" 
-                         class="btn btn-sm btn-danger" 
-                         onclick="return confirm('Are you sure you want to delete this file?');">
-                        <i class="fas fa-trash"></i>
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              <?php endwhile; ?>
-            </tbody>
-          </table>
-        <?php else: ?>
-          <div class="empty-state">
-            <i class="fas fa-file-alt"></i>
-            <h5>No Files Found</h5>
-            <p>
-              <?php if ($isSearching): ?>
-                No files match your search criteria. Try a different search term or upload a new file.
+<!-- Files Table -->
+<div class="table-container animate-slide-up">
+  <h5 class="mb-4"><i class="fas fa-file me-2 text-primary"></i>Files in <?php echo htmlspecialchars($folder['FOLDER_NAME']); ?></h5>
+  
+  <?php if ($result_files && mysqli_num_rows($result_files) > 0): ?>
+    <table id="filesTable" class="table table-hover">
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Reference Number</th>
+          <th>Size (KB)</th>
+          <th>Upload Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php while ($file = mysqli_fetch_assoc($result_files)): ?>
+          <tr>
+            <td>
+              <?php 
+              $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+              $icon_class = 'fa-file';
+              
+              // Determine icon based on file extension
+              switch(strtolower($file_extension)) {
+                case 'pdf':
+                  $icon_class = 'fa-file-pdf';
+                  break;
+                case 'doc':
+                case 'docx':
+                  $icon_class = 'fa-file-word';
+                  break;
+                case 'xls':
+                case 'xlsx':
+                  $icon_class = 'fa-file-excel';
+                  break;
+                case 'ppt':
+                case 'pptx':
+                  $icon_class = 'fa-file-powerpoint';
+                  break;
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                case 'gif':
+                  $icon_class = 'fa-file-image';
+                  break;
+                case 'zip':
+                case 'rar':
+                  $icon_class = 'fa-file-archive';
+                  break;
+                case 'mp3':
+                case 'wav':
+                  $icon_class = 'fa-file-audio';
+                  break;
+                case 'mp4':
+                case 'avi':
+                  $icon_class = 'fa-file-video';
+                  break;
+                case 'txt':
+                  $icon_class = 'fa-file-alt';
+                  break;
+              }
+              ?>
+              <i class="fas <?php echo $icon_class; ?> me-2 text-primary"></i>
+              <?php echo htmlspecialchars($file['name']); ?>
+            </td>
+            <td>
+              <?php if (!empty($file['reference_number'])): ?>
+                <span class="badge bg-info text-white">
+                  <?php echo htmlspecialchars($file['reference_number']); ?>
+                </span>
               <?php else: ?>
-                This folder doesn't have any files yet. Upload your first file to get started.
+                <span class="text-muted">-</span>
               <?php endif; ?>
-            </p>
-            <a href="addfilesinfolders.php?folder_id=<?php echo $folder_id; ?>" class="btn btn-primary mt-3">
-              <i class="fas fa-upload me-2"></i>Upload File
-            </a>
-          </div>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark">
+                <?php echo number_format($file['size'], 2); ?> KB
+              </span>
+            </td>
+            <td><?php echo date('M d, Y H:i', strtotime($file['timers'])); ?></td>
+            <td>
+              <div class="btn-group">
+                <a href="view_files.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-success">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a href="download_file.php?file_id=<?php echo $file['id']; ?>" class="btn btn-sm btn-info">
+                  <i class="fas fa-download"></i>
+                </a>
+                <a href="delete_file.php?file_id=<?php echo $file['id']; ?>&folder_id=<?php echo $folder_id; ?>git " 
+                   class="btn btn-sm btn-danger" 
+                   onclick="return confirm('Are you sure you want to delete this file?');">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        <?php endwhile; ?>
+      </tbody>
+    </table>
+  <?php else: ?>
+    <div class="empty-state">
+      <i class="fas fa-file-alt"></i>
+      <h5>No Files Found</h5>
+      <p>
+        <?php if ($isSearching): ?>
+          No files match your search criteria. Try a different search term or upload a new file.
+        <?php else: ?>
+          This folder doesn't have any files yet. Upload your first file to get started.
         <?php endif; ?>
-      </div>
+      </p>
+      <a href="addfilesinfolders.php?folder_id=<?php echo $folder_id; ?>" class="btn btn-primary mt-3">
+        <i class="fas fa-upload me-2"></i>Upload File
+      </a>
     </div>
-  </div>
+  <?php endif; ?>
+</div>
+  
 
   <!-- Create Subfolder Modal -->
   <div class="modal fade" id="createSubfolderModal" tabindex="-1">

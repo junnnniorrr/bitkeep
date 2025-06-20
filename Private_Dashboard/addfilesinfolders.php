@@ -68,8 +68,9 @@ if (isset($_POST['upload'])) {
             date_default_timezone_set("GMT");
             $time = date("Y-m-d H:i:s", strtotime("+1 HOURS")); // Store in standard SQL datetime format
 
-            $sql = "INSERT INTO folder_files (folder_id, name, file_path, size, file_type, timers) 
-                    VALUES ('$folder_id', '$filename', '$destination', '$size', '$extension', '$time')";
+            $reference_number = isset($_POST['reference_number']) ? mysqli_real_escape_string($conn, $_POST['reference_number']) : '';
+$sql = "INSERT INTO folder_files (folder_id, name, file_path, size, file_type, timers, reference_number) 
+        VALUES ('$folder_id', '$filename', '$destination', '$size', '$extension', '$time', '$reference_number')";
 
             if (mysqli_query($conn, $sql)) {
                 $upload_status = 'success';
@@ -654,6 +655,37 @@ $breadcrumbs = getBreadcrumbTrail($conn, $folder_id);
         margin-top: 10px;
       }
     }
+
+    /* Reference Number Field */
+.form-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.form-control {
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 15px;
+  transition: all 0.3s;
+  font-size: 0.95rem;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+  outline: 0;
+}
+
+.form-text {
+  color: var(--gray-color);
+  font-size: 0.85rem;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+}
   </style>
 </head>
 
@@ -779,18 +811,30 @@ $breadcrumbs = getBreadcrumbTrail($conn, $folder_id);
             <p>or click to browse your files</p>
             <input type="file" name="file" id="fileInput" required>
           </div>
+<div class="file-info" id="fileInfo">
+  <div class="file-info-header">
+    <div id="fileTypeIcon" class="file-type-icon file-type-default">
+      <i class="fas fa-file"></i>
+    </div>
+    <h6 id="fileName">No file selected</h6>
+  </div>
+  <div class="file-info-body">
+    <p id="fileSize">0 KB</p>
+  </div>
+</div>
 
-          <div class="file-info" id="fileInfo">
-            <div class="file-info-header">
-              <div id="fileTypeIcon" class="file-type-icon file-type-default">
-                <i class="fas fa-file"></i>
-              </div>
-              <h6 id="fileName">No file selected</h6>
-            </div>
-            <div class="file-info-body">
-              <p id="fileSize">0 KB</p>
-            </div>
-          </div>
+<div class="mb-3 mt-3">
+  <label for="referenceNumber" class="form-label">
+    <i class="fas fa-hashtag me-2"></i>Reference Number (Optional)
+  </label>
+  <input type="text" class="form-control" id="referenceNumber" name="reference_number" 
+         placeholder="Enter reference number (e.g., REF001, DOC-2024-001)" 
+         maxlength="100">
+  <div class="form-text">
+    <i class="fas fa-info-circle me-1"></i>
+    You can add a reference number to help identify this file later.
+  </div>
+</div>
 
           <div class="allowed-file-types">
             <div class="file-type-badge"><i class="fas fa-file-pdf"></i> PDF</div>
