@@ -657,7 +657,7 @@ header('Location: index.html');
   <!--Main Navigation-->
 
   <!--Add admin modal-->
-  <div class="modal fade" id="modalRegisterForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="modalRegisterForm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <form action="create_Admin.php" method="POST">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -675,7 +675,18 @@ header('Location: index.html');
             </div>
             <div class="md-form mb-4">
               <i class="fas fa-building prefix grey-text"></i>
-              <input type="text" id="orangeForm-department" name="department" class="form-control validate" required>
+              <select id="orangeForm-department" name="department" class="form-control validate" required>
+                <option value="">Select Department</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Operations">Operations</option>
+                <option value="Sales">Sales</option>
+                <option value="Customer Service">Customer Service</option>
+                <option value="Legal">Legal</option>
+                <option value="Research & Development">Research & Development</option>
+              </select>
               <label data-error="wrong" data-success="right" for="orangeForm-department">Your Department</label>
             </div>
             <div class="md-form mb-5">
@@ -727,7 +738,18 @@ header('Location: index.html');
             </div>
             <div class="md-form mb-4">
               <i class="fas fa-building prefix grey-text"></i>
-              <input type="text" id="orangeForm-department" name="department" class="form-control validate" required>
+              <select id="orangeForm-department" name="department" class="form-control validate" required>
+                <option value="">Select Department</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Operations">Operations</option>
+                <option value="Sales">Sales</option>
+                <option value="Customer Service">Customer Service</option>
+                <option value="Legal">Legal</option>
+                <option value="Research & Development">Research & Development</option>
+              </select>
               <label data-error="wrong" data-success="right" for="orangeForm-department">Your Department</label>
             </div>
             <div class="md-form mb-4">
